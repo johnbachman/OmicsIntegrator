@@ -1187,7 +1187,7 @@ def PCSF(inputObj,msgpath,seed):
     return (Edge, Info)
 
 def changeValuesAndMergeResults(func, seed, inputObj, numRuns, msgpath, outputpath, outputlabel,
-                                excludeT):
+                                excludeT, merge=False):
     """
     Changes the prizes/edges in the PCSFInput object according to func and runs the msgsteiner 
     algorithm, then merges the results together with the given PCSFOutput object. Writes 
@@ -1232,22 +1232,31 @@ def changeValuesAndMergeResults(func, seed, inputObj, numRuns, msgpath, outputpa
         if str(func)[10:23]  == 'shufflePrizes':
             changedOutputObj = PCSFOutput(inputObj, newEdgeList, newInfo, outputpath, 
                                           outputlabel+'_shuffledPrizes_%i'%i, 0)
+            label = 'shuffledPrizes_%i' % i
         elif str(func)[10:20] == 'noiseEdges':
             changedOutputObj = PCSFOutput(inputObj, newEdgeList, newInfo, outputpath, 
                                           outputlabel+'_noisyEdges_%i'%i, 0)
+            label = 'noisyEdges_%i' % i
         elif str(func)[10:25] == 'randomTerminals':
             changedOutputObj = PCSFOutput(inputObj, newEdgeList, newInfo, outputpath,
                                           outputlabel+'_randomTerminals_%i'%i, 0)
-        if i == 0:
-            #first run
-            merged = changedOutputObj
-        elif i == numRuns-1:
-            #last run, merge results and calculate betweenness
-            merged = mergeOutputs(merged, changedOutputObj, 1, i, 1)
-        else:
-            #Merge results of runs with the merged object containing all results so far
-            merged = mergeOutputs(merged, changedOutputObj, 0, i, 1)
-        i += 1
+            label = 'randomTerminals_%i' % i
+        out = os.path.join(outputpath, label)
+        if not os.path.exists(out):
+            os.makedirs(out)
+        changedOutputObj.writeCytoFiles(out, label, True)
+        merged = None
+        if merge:
+            if i == 0:
+                #first run
+                merged = changedOutputObj
+            elif i == numRuns-1:
+                #last run, merge results and calculate betweenness
+                merged = mergeOutputs(merged, changedOutputObj, 1, i, 1)
+            else:
+                #Merge results of runs with the merged object containing all results so far
+                merged = mergeOutputs(merged, changedOutputObj, 0, i, 1)
+        i += 1 
     #return merged outputobj
     return merged
 
@@ -1397,6 +1406,9 @@ def main():
     parser.add_argument("-s", "--seed", dest='seed', help='An integer seed for the pseudo-random '\
         'number generators. If you want to reproduce exact results, supply the same seed. '\
         'Default = None.', type=int, default=None)
+    parser.add_argument("--merge", dest='merge',
+                        help="Don't merge results of multirun methods such as"
+                        " noisyEdges", default=False)
     
     options = parser.parse_args()
     
@@ -1430,25 +1442,28 @@ def main():
         merged = changeValuesAndMergeResults(noiseEdges, options.seed, inputObj, 
                                              options.noiseNum, options.msgpath, 
                                              options.outputpath, options.outputlabel,
-                                             options.excludeT)
-        merged.writeCytoFiles(options.outputpath, options.outputlabel+'_noisy', options.cyto30)
+                                             options.excludeT, merge=options.merge)
+        if merged is not None:
+            merged.writeCytoFiles(options.outputpath, options.outputlabel+'_noisy', options.cyto30)
     
     #Get merged results of shuffling prizes
     if options.shuffleNum > 0:
         merged = changeValuesAndMergeResults(shufflePrizes, options.seed, inputObj, 
                                              options.shuffleNum, options.msgpath, 
                                              options.outputpath, options.outputlabel,
-                                             options.excludeT)
-        merged.writeCytoFiles(options.outputpath, options.outputlabel+'_shuffled', options.cyto30)
+                                             options.excludeT, merge=options.merge)
+        if merged is not None:
+            merged.writeCytoFiles(options.outputpath, options.outputlabel+'_shuffled', options.cyto30)
 
     #Get merged results of randomizing terminals
     if options.termNum > 0:
         merged = changeValuesAndMergeResults(randomTerminals,options.seed, inputObj,
                                              options.termNum, options.msgpath,
                                              options.outputpath, options.outputlabel,
-                                             options.excludeT)
-        merged.writeCytoFiles(options.outputpath, options.outputlabel+'_randomTerminals', 
-                              options.cyto30)
+                                             options.excludeT, merge=options.merge)
+        if merged is not None:
+            merged.writeCytoFiles(options.outputpath, options.outputlabel+'_randomTerminals', 
+                                  options.cyto30)
     
     #If k is supplied, run k-fold cross validation
     if options.cv != None:
