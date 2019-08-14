@@ -1075,7 +1075,7 @@ class PCSFOutput(object):
             for (node1, node2, data) in edgesSorted:
                 # Check if interaction between node1 and node2 is directed
                 try:
-                    w = self.inputObj.dirEdges[node1][node2]
+                    self.inputObj.dirEdges[node1][node2]
                     augSif.write(node1 + "\tpd\t" + node2 + "\n")
                     eda.write(
                         node1
