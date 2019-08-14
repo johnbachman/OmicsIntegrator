@@ -4,14 +4,14 @@ import re
 import string
 import sys
 
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 from csv import DictReader
 from collections import defaultdict
 
-import chipsequtil
+from . import chipsequtil
 
 # for RefGeneDB
-from util import KeyedBinaryTree
+from .util import KeyedBinaryTree
 
 
 def get_file_parts(path) :
@@ -136,17 +136,17 @@ class SmartFileIter :
             raise Exception('Subclasses must define class members FIELD_NAMES and FIELD_TYPES')
         if isinstance(f,str) :
             f = open(f,'rU')
-        self._dict_reader = DictReader(filter(lambda row: row[0]!='#',f),delimiter='\t',fieldnames=self.FIELD_NAMES)
+        self._dict_reader = DictReader([row for row in f if row[0]!='#'],delimiter='\t',fieldnames=self.FIELD_NAMES)
         self.fieldnames = self.FIELD_NAMES
-        self.curr_line = self._dict_reader.next()
+        self.curr_line = next(self._dict_reader)
         self.skip_line_chars = skip_line_chars
 
         # skip initial comment lines
         while self.curr_line[self.FIELD_NAMES[0]][0] in self.skip_line_chars :
-            self.curr_line = self._dict_reader.next()
+            self.curr_line = next(self._dict_reader)
 
-        if self.FIELD_NAMES[0] in self.curr_line.values() :
-            self.curr_line = self._dict_reader.next()
+        if self.FIELD_NAMES[0] in list(self.curr_line.values()) :
+            self.curr_line = next(self._dict_reader)
 
     def __iter__(self) :
         return self
@@ -157,7 +157,7 @@ class SmartFileIter :
         except KeyError :
             return getattr(self._dict_reader,attr)
 
-    def next(self) :
+    def __next__(self) :
         """Emit the next record in the file as a dictionary with parsed values"""
 
         if self.curr_line is None :
@@ -167,17 +167,17 @@ class SmartFileIter :
 
         # check for comment
         while line[self.FIELD_NAMES[0]][0] in self.skip_line_chars :
-            line = self.curr_line = self._dict_reader.next()
+            line = self.curr_line = next(self._dict_reader)
 
         for k,f in zip(self.FIELD_NAMES, self.FIELD_TYPES) :
             try :
                 line[k] = f(line[k])
-            except Exception, e :
+            except Exception as e :
                 #sys.stderr.write('Warning: field %s on line %d could not be properly formatted, exception %s\n'%(k,self._dict_reader.reader.line_num,str(e)))
                 line[k] = line[k]
 
         try :
-            self.curr_line = self._dict_reader.next()
+            self.curr_line = next(self._dict_reader)
         except StopIteration :
             self.curr_line = None
 
@@ -208,7 +208,7 @@ class BEDOutput :
         if type(line) == str :
             line = line.strip().split('\t')
 
-        if len(line) < 3 and any([x not in kwargs.keys() for x in ['chrom','chromStart','chromEnd']]) :
+        if len(line) < 3 and any([x not in list(kwargs.keys()) for x in ['chrom','chromStart','chromEnd']]) :
             raise BEDOutput.FormatException('Format requres at least 3 fields in \
                                             input, found %d in line: %s'%(len(line),line))
         if len(line) > len(BEDOutput.FIELD_NAMES) :
@@ -221,7 +221,7 @@ class BEDOutput :
             setattr(self,fn,parse_number(d))
 
         # kwargs override line input
-        for k,v in kwargs.items() :
+        for k,v in list(kwargs.items()) :
             setattr(self,k,parse_number(v))
 
     def __repr__(self) :
@@ -364,7 +364,7 @@ class RefGeneFile(DictReader) :
     def __init__(self,refGene_fn) :
         refGene_f = open(refGene_fn,'rU')
         # check for header
-        first_line = refGene_f.next()
+        first_line = next(refGene_f)
         if not first_line.strip().startswith('#') :
             refGene_f.seek(0) # first line not header, reset the file pointer
         DictReader.__init__(self,refGene_f,delimiter='\t',fieldnames=RefGeneOutput.FIELD_NAMES)
@@ -447,13 +447,13 @@ class KnownGeneFile(SmartFileIter) :
         self.meta_data = []
         self.file_info = {}
         f = open(kg_fn,'rU')
-        self._dict_reader = DictReader(filter(lambda row: row[0]!='#',f),delimiter='\t',fieldnames=KnownGeneFile.FIELD_NAMES)
+        self._dict_reader = DictReader([row for row in f if row[0]!='#'],delimiter='\t',fieldnames=KnownGeneFile.FIELD_NAMES)
 
     def __iter__(self) :
         return self
 
-    def next(self) :
-        line = self._dict_reader.next()
+    def __next__(self) :
+        line = next(self._dict_reader)
         for k,f in zip(self.FIELD_NAMES,self.FIELD_TYPES) :
             line[k] = f(line[k])
         return line
@@ -471,7 +471,7 @@ class RefGeneDB :
             genes[gene['chrom']].append(gene)
 
         # do stuff to ensure a balanced tree for each chromosome
-        for chrom,gene_list in genes.items() :
+        for chrom,gene_list in list(genes.items()) :
             gene_list.sort(key=lambda x: int(x['txStart']))
             first_half, second_half = gene_list[:len(gene_list)/2],gene_list[len(gene_list)/2:]
             first_half.reverse()
@@ -547,26 +547,26 @@ class MACSFile(SmartFileIter) :
                   ]
 
     _METADATA_REGEXES = [
-            u'# This file is generated by (MACS version) (.*)',
-            u'# (name) = (.*)',
-            u'# (format) = (.*)',
-            u'# (ChIP-seq file) = (.*)',
-            u'# (control file) = (.*)',
-            u'# (effective genome size) = (.*)',
-            u'# (band width) = (\d+)',
-            u'# (model fold) = (.*)',
-            u'# (pvalue cutoff) = (.*)',
-            u'# (Range for calculating regional lambda) is: (.*)',
-            u'# (tag size) is determined as (\d+) bps',
-            u'# (total tags in treatment): (\d+)',
-            u'# (tags after filtering in treatment): (\d+)',
-            u'# (maximum duplicate tags at the same position in treatment) = (\d+)',
-            u'# (Redundant rate in treatment): (.*)',
-            u'# (total tags in control): (.*)',
-            u'# (tags after filtering in control): (.*)',
-            u'# (maximum duplicate tags at the same position in control) = (\d+)',
-            u'# (Redundant rate in control): (.*)',
-            u'# (d) = (\d+)'
+            '# This file is generated by (MACS version) (.*)',
+            '# (name) = (.*)',
+            '# (format) = (.*)',
+            '# (ChIP-seq file) = (.*)',
+            '# (control file) = (.*)',
+            '# (effective genome size) = (.*)',
+            '# (band width) = (\d+)',
+            '# (model fold) = (.*)',
+            '# (pvalue cutoff) = (.*)',
+            '# (Range for calculating regional lambda) is: (.*)',
+            '# (tag size) is determined as (\d+) bps',
+            '# (total tags in treatment): (\d+)',
+            '# (tags after filtering in treatment): (\d+)',
+            '# (maximum duplicate tags at the same position in treatment) = (\d+)',
+            '# (Redundant rate in treatment): (.*)',
+            '# (total tags in control): (.*)',
+            '# (tags after filtering in control): (.*)',
+            '# (maximum duplicate tags at the same position in control) = (\d+)',
+            '# (Redundant rate in control): (.*)',
+            '# (d) = (\d+)'
             ]
 
     def __init__(self,macs_fn) :
@@ -598,7 +598,7 @@ class MACSOutput(object) :
 
 GLOBAL_SETTINGS_FN = os.path.join(os.path.split(chipsequtil.__file__)[0],'org_settings.cfg')
 LOCAL_SETTINGS_FN = os.path.expanduser(os.path.join('~','.org_settings.cfg'))
-_ALL_SETTINGS, _LOCAL_SETTINGS, _GLOBAL_SETTINGS = range(3)
+_ALL_SETTINGS, _LOCAL_SETTINGS, _GLOBAL_SETTINGS = list(range(3))
 
 def _get_org_settings(org_key=None,addnl_configs=[],src=_ALL_SETTINGS) :
     """Utility function used by get_org_settings and get_all_settings, should \

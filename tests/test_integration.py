@@ -41,12 +41,12 @@ def test_forest_integration(msgsteiner):
                                    shallow=False)
 
         if len(match) != 6:
-            print 'Mismatching files: ', mismatch
-            print 'Errors: ', errors
+            print('Mismatching files: ', mismatch)
+            print('Errors: ', errors)
             assert 0, 'Not all Forest output files match'
 
     except IOError:
-        print 'IO error'
+        print('IO error')
     finally:
         shutil.rmtree(forest_out)
 
@@ -113,12 +113,12 @@ def test_garnet_integration():
         # Add 1 because events_to_genes_with_motifsregression_results.tsv is
         # not in the output_files list
         if len(match) != (len(output_files)+1):
-            print 'Mismatching files: ', mismatch
-            print 'Errors: ', errors
+            print('Mismatching files: ', mismatch)
+            print('Errors: ', errors)
             assert 0, 'Not all Garnet output files match'
 
     except IOError:
-        print 'IO error'
+        print('IO error')
     finally:
         # Remove temporary config file here because delete=False above
         os.remove(conf_file.name)

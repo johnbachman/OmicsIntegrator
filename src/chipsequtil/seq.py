@@ -1,4 +1,4 @@
-from itertools import izip
+
 from textwrap import wrap
 
 # FASTA functions and classes
@@ -38,7 +38,7 @@ def write_fasta_to_file(fasta,f,linelen=None) :
     instance.  *f* may be a filename or a file-like object opened with write
     mode.'''
     if isinstance(fasta,dict) :
-        fasta_itr = fasta.iteritems()
+        fasta_itr = iter(fasta.items())
     else :
         fasta_itr = fasta
 
@@ -98,15 +98,15 @@ class FASTAFile(object) :
     def __setitem__(self,key,val) :
         self._dict[key] = val
 
-    def next(self) :
+    def __next__(self) :
         '''Returns next FASTA record in the file as (header, sequence) tuple.'''
 
         if self._fasta_itr is None :
-            self._fasta_itr = izip(self.headers,self.sequences)
+            self._fasta_itr = zip(self.headers,self.sequences)
 
         try :
-            header, seq = self._fasta_itr.next()
-        except StopIteration, e :
+            header, seq = next(self._fasta_itr)
+        except StopIteration as e :
             self._fasta_itr = None
             self._f = None
             raise e
@@ -170,7 +170,7 @@ def write_fastq_to_file(fastq,f,linelen=None) :
     instance.  *f* may be a filename or a file-like object opened with write
     mode.'''
     if isinstance(fastq,dict) :
-        fastq_itr = fasta.iteritems()
+        fastq_itr = iter(fasta.items())
     else :
         fastq_itr = fasta
 
@@ -238,15 +238,15 @@ class FASTQFile(object) :
     def __setitem__(self,key,val) :
         self._dict[key] = val
 
-    def next(self) :
+    def __next__(self) :
         '''Returns next FASTA record in the file as (header, sequence) tuple.'''
 
         if self._fastq_itr is None :
-            self._fastq_itr = izip(self.headers,self.sequences)
+            self._fastq_itr = zip(self.headers,self.sequences)
 
         try :
-            header, (seq, qual) = self._fastq_itr.next()
-        except StopIteration, e :
+            header, (seq, qual) = next(self._fastq_itr)
+        except StopIteration as e :
             self._fastq_itr = None
             self._f = None
             raise e

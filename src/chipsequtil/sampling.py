@@ -5,8 +5,8 @@ import re
 import sys
 from collections import defaultdict
 
-from chipsequtil import get_org_settings, get_gc_content, get_gc_content_distribution, RefGeneFile
-from nib import NibDB, NibException
+from .chipsequtil import get_org_settings, get_gc_content, get_gc_content_distribution, RefGeneFile
+from .nib import NibDB, NibException
 
 def kl_divergence(p,q) :
     """Return Kullback-Leibler divergence for two probability distributions
@@ -45,7 +45,7 @@ def rejection_sample_bg(fg_dict,organism,bins=100,num_samples=None,verbose=False
     num_samples = len(fg_dict) if not num_samples else num_samples
     dists,sizes=[],[]
 
-    for header,seq in fg_dict.items() :
+    for header,seq in list(fg_dict.items()) :
 
         # chromosome first field in fasta headers from bed2seq.bedtoseq
         chrom = header.split(':')[0]
@@ -75,14 +75,14 @@ def rejection_sample_bg(fg_dict,organism,bins=100,num_samples=None,verbose=False
         sizes.append(len(seq))
 
     # GC content distribution for the foreground sequences
-    gc_dist = get_gc_content_distribution(fg_dict.values(),bins=bins)
+    gc_dist = get_gc_content_distribution(list(fg_dict.values()),bins=bins)
 
     # max_gc is # peaks w/ highest GC content
     max_gc = max(gc_dist)
 
     # gene_starts is a list of all genes in (chromosome,gene start) tuples
     gene_starts=[]
-    for key in tss.keys():
+    for key in list(tss.keys()):
         chrom=key.split('chr')[-1]
         for x in tss[key]:
             gene_starts.append((key,x[0]))
@@ -113,10 +113,10 @@ def rejection_sample_bg(fg_dict,organism,bins=100,num_samples=None,verbose=False
         # extract the proposed sequence
         try :
             nib_title, seq = nib_db.get_fasta(chrom,start,stop,strand)
-        except IOError, e :
+        except IOError as e :
             if verbose : sys.stderr.write('IOError in NibDB, skipping: %s,%d-%d,%s\n'%(chrom,start,stop,strand))
             seq = None
-        except NibException, e :
+        except NibException as e :
             if verbose : sys.stderr.write('NibDB.get_fasta error, %s\n'%e)
             seq = None
 
@@ -157,9 +157,9 @@ def rejection_sample_bg(fg_dict,organism,bins=100,num_samples=None,verbose=False
         if sum_cnts != 0 : # ! on first sequence
 
             # calculate the current distributions
-            last_gc_p = map(lambda x:x/sum_cnts,bg_gc_cnts)
+            last_gc_p = [x/sum_cnts for x in bg_gc_cnts]
             bg_gc_cnts[gc_bin] += 1
-            new_gc_p = map(lambda x:x/sum_cnts,bg_gc_cnts)
+            new_gc_p = [x/sum_cnts for x in bg_gc_cnts]
 
             # calculate the kl divergence between last distribution
             # and current one, stopping if less than epsilon
@@ -195,15 +195,15 @@ def rejection_sample_bg(fg_dict,organism,bins=100,num_samples=None,verbose=False
             sys.stderr.flush()
             pseudocounts = (fg_i*sum(bg_gc_cnts))/(1-1.*fg_i*len(bg_gc_cnts))
 
-    bg_gc_cnts = map(lambda x: x+pseudocounts/sum(bg_gc_cnts),bg_gc_cnts)
-    bg_gc_dist = map(lambda x: x/sum(bg_gc_cnts),bg_gc_cnts)
+    bg_gc_cnts = [x+pseudocounts/sum(bg_gc_cnts) for x in bg_gc_cnts]
+    bg_gc_dist = [x/sum(bg_gc_cnts) for x in bg_gc_cnts]
 
     # last, find the multiplier that causes the background gc distribution to
     # envelope the foreground gc dist
     z_coeff = gc_dist[0]/bg_gc_dist[0]
     for fg_i, bg_i in zip(gc_dist[1:],bg_gc_dist[1:]) :
         z_coeff = max(z_coeff,fg_i/bg_i)
-    bg_gc_dist = map(lambda x: x*z_coeff,bg_gc_dist)
+    bg_gc_dist = [x*z_coeff for x in bg_gc_dist]
 
     # start generating bg sequences
     bg_dict = {}

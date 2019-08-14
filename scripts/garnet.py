@@ -39,7 +39,7 @@ __email__='sgosline@mit.edu'
 ##update this to include direct location of chipsequtil pacakge
 import sys,os,re
 import argparse
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 progdir=os.path.dirname(sys.argv[0])
 
@@ -63,13 +63,13 @@ def mapGenesToRegions(genefile,xreffile,bedfile,window='2000',outdir=None):
     ##Step 1: map chromatin regions to nearby genes/transcription start sites
     cmd='python '+os.path.join(progdir,'map_peaks_to_known_genes.py')+' --peaks-format=auto --utilpath='+os.path.join(progdir,'../src/')+' --upstream-window='+window+' --downstream-window='+window+' --tss --map-output='+outfile+' --symbol-xref='+xreffile+' '+genefile+' '+bedfile
     if not os.path.exists(outfile):
-        print '\n-----------------------------Gene-region mapping output------------------------------------------\n'
-        print 'Running command:\n'+cmd+'\n'
+        print('\n-----------------------------Gene-region mapping output------------------------------------------\n')
+        print('Running command:\n'+cmd+'\n')
 
-        print 'Mapping genes from '+genefile+' to regions within '+window+' bp of events from '+bedfile+' and putting results in '+outfile
+        print('Mapping genes from '+genefile+' to regions within '+window+' bp of events from '+bedfile+' and putting results in '+outfile)
         res=os.system(cmd)
     else:
-        print 'File '+outfile+' already exists. If you would like to replace it, delete and re-run'
+        print('File '+outfile+' already exists. If you would like to replace it, delete and re-run')
 
     return res,outfile
 
@@ -93,14 +93,14 @@ def motifScanning(tamo_file,fastafile,numthreads,genome,closest_gene_file='',gen
 
 
     if os.path.exists(motif_binding_out):
-        print '\nIntermediate file '+motif_binding_out+' already exists, if you would like to replace, delete and re-run'
+        print('\nIntermediate file '+motif_binding_out+' already exists, if you would like to replace, delete and re-run')
         return 0,motif_binding_out
 
 
     scan_cmd='python '+os.path.join(progdir,'motif_fsa_scores.py')+' --motif='+tamo_file+' --genome='+genome+' --outfile='+motif_binding_out+' --genemappingfile='+closest_gene_file+' --scale=10 --threads='+numthreads+' '+fastafile+' --genelist='+gene_list
-    print '\n-----------------------------Motif Scanning Output------------------------------------------\n'
-    print 'Running command:\n'+scan_cmd+'\n'
-    print 'Scanning regions from '+fastafile+' using matrices from '+tamo_file+' and putting results in '+motif_binding_out
+    print('\n-----------------------------Motif Scanning Output------------------------------------------\n')
+    print('Running command:\n'+scan_cmd+'\n')
+    print('Scanning regions from '+fastafile+' using matrices from '+tamo_file+' and putting results in '+motif_binding_out)
     res=os.system(scan_cmd)
     return res,motif_binding_out
 
@@ -125,11 +125,11 @@ def createBindingMatrix(motif_binding_out,outfile,fastafile,tamo_file,use_unipro
 
     pklfile=re.sub('.tgm','.pkl',matfile)
     if os.path.exists(pklfile):
-        print '\nIntermediate file '+pklfile+' already exists, if you would like to replace delete and re-run'
+        print('\nIntermediate file '+pklfile+' already exists, if you would like to replace delete and re-run')
         return 0,pklfile
 
-    print '\n-----------------------------Binding Matrix Output------------------------------------------\n'
-    print 'Running command:\n'+map_cmd+'\n'
+    print('\n-----------------------------Binding Matrix Output------------------------------------------\n')
+    print('Running command:\n'+map_cmd+'\n')
     res=os.system(map_cmd)
     
     return res,pklfile
@@ -142,7 +142,7 @@ def getTfsFromRegression(pickle_file,expressionfile,pvalT,qvalT,plot):
 #    print '\nRunning regression using '+expressionfile+' expression data and '+pickle_file+' binding data'
     outdir=re.sub('.pkl','regression_results.tsv',pickle_file)
 #    outdir=os.path.basename(expressionfile).split('.')[-2]+'_'+re.sub('.pkl','',os.path.basename(pickle_file))+'.xls'
-    print outdir
+    print(outdir)
     if not os.path.exists(outdir):
         cmd='python '+os.path.join(progdir,'motif_regression.py')+' --outdir='+outdir+' '+pickle_file+' '+expressionfile
 
@@ -159,8 +159,8 @@ def getTfsFromRegression(pickle_file,expressionfile,pvalT,qvalT,plot):
         if plot:        
             cmd+=' --plot'
 
-        print '\n-----------------------------Regression Output------------------------------------------\n'
-        print 'Running command:\n'+cmd+'\n'
+        print('\n-----------------------------Regression Output------------------------------------------\n')
+        print('Running command:\n'+cmd+'\n')
         res=os.system(cmd)
     else:
         res=0
@@ -202,10 +202,10 @@ def main():
     if genefile is not None and bedfile is not None:
         keeprunning,outfile=mapGenesToRegions(genefile,xref,bedfile,window,opts.outdir)
     else:
-        print 'Missing genefile,bedfile or xref file, cannot map genes to regions.'
+        print('Missing genefile,bedfile or xref file, cannot map genes to regions.')
         sys.exit()
     if keeprunning!=0:
-        print 'Error running gene mapping step, check your files and try again'
+        print('Error running gene mapping step, check your files and try again')
         sys.exit()
         
     tamofile=config.get('motifData','tamo_file')
@@ -226,10 +226,10 @@ def main():
             keeprunning,binding_out=motifScanning(tamofile,fastafile,numthreads,genome,outfile,expr)
         else:
             binding_out=''
-            print 'Missing FASTA file or TAMO file - check your config file and try again.'
+            print('Missing FASTA file or TAMO file - check your config file and try again.')
 
         if keeprunning!=0:
-            print 'Error running motif-scanning step, check your files and try again'
+            print('Error running motif-scanning step, check your files and try again')
             sys.exit()
         
 
@@ -241,7 +241,7 @@ def main():
         binding_matrix=''
 
     if keeprunning!=0:
-        print 'Error running matrix creation step, check your files and try again'
+        print('Error running matrix creation step, check your files and try again')
         sys.exit()
 
 #        pklfile=config.get('motifData','pkl')
@@ -254,7 +254,7 @@ def main():
         cmd='python '+os.path.join(progdir,'zipTgms.py')+' --pkl='+binding_matrix+' --genome '+genome+' --as-network --tf-delimiter='+delim
         if opts.allgenes:
             cmd=cmd+' --allGenes'
-        print cmd
+        print(cmd)
         os.system(cmd)
         
     pvt=config.get('expressionData','pvalThresh')
@@ -271,9 +271,9 @@ def main():
         if binding_matrix!='' and os.path.exists(binding_matrix) and os.path.exists(expr):
             keeprunning,tfs=getTfsFromRegression(binding_matrix,expr,pvt,qvt,plot)
         else:
-            print 'Cannot perform regression because binding matrix or expression datasets are missing'
+            print('Cannot perform regression because binding matrix or expression datasets are missing')
     if keeprunning!=0:
-        print 'Error running regression step, check your files and try again'
+        print('Error running regression step, check your files and try again')
         sys.exit()
    
     

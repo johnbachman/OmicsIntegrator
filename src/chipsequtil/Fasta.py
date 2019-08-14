@@ -32,7 +32,7 @@ def keys(filename,key_func=None):
         ids = [x.strip().split()[0] for x in FID.readlines() if (x.strip() and x[0] != '#') ]
         FID.close()
         return ids
-    return file2dict(filename,key_func=key_func).keys()
+    return list(file2dict(filename,key_func=key_func).keys())
 
 def ids(filename,key_func=None):
     '''
@@ -56,7 +56,7 @@ def seqs(filename):
     --------------------
     Return a list of the sequences contained in the file.
     '''
-    return load(filename).values()
+    return list(load(filename).values())
 
 def load(filename,key_func=None):
     '''
@@ -100,12 +100,12 @@ def fasta2dict(filename, want_dict = 'YES',key_func=None):
             if not key_func:  key = raw_id.split()[0]
             else:            key = key_func(raw_id)
         except:
-            print raw_id
+            print(raw_id)
             sys.stdout.flush()
             sys.exit(1)
         D[key] = seq
     if want_dict: return D
-    else:         return D.values()
+    else:         return list(D.values())
 
 
 def delN(fsaD):
@@ -115,11 +115,11 @@ def delN(fsaD):
     Remove any entries in the Fasta-derived dictionary that have any DNA
     ambiguity codes within.  Reports ids of deleted sequences.
     '''
-    for key,seq in fsaD.items():
+    for key,seq in list(fsaD.items()):
         seq = re.sub("^N*","",seq)
         seq = re.sub("N*$","",seq)
         if re.search('[NRYKMSWBDHV]',seq):
-            print 'deleting ',key
+            print('deleting ',key)
             del fsaD[key]
         else:
             fsaD[key] = seq
@@ -159,7 +159,7 @@ def find(name,pathhint=None):
             return smroot + '.fsa'
         elif pathhint and exists(pathhint + smroot + '.fsa'):
             return pathhint + smroot + '.fsa'
-    print '## ! Could not find fsa file for %s'%name
+    print('## ! Could not find fsa file for %s'%name)
     return None
 
 def write(D,filename,linelen=70):
@@ -186,7 +186,7 @@ def text(D,toupper=0,linelen=70):
     Returns a single string.
     '''
     sA = []
-    keys = D.keys()
+    keys = list(D.keys())
     keys.sort()
     for id in keys:
         if toupper: seq = D[id].upper()
@@ -213,13 +213,13 @@ def random_subset(filename_or_seqD,target_count=30):
         seqD = filename_or_seqD
     else:
         seqD = file2dict(filename_or_seqD)
-    ids      = seqD.keys()
+    ids      = list(seqD.keys())
     newD     = {}
     count    = 0
     numseqs  = len(ids)
     while count < target_count:
         randomid = ids[int(random.random()*numseqs)]
-        if newD.has_key(randomid): continue
+        if randomid in newD: continue
         newD[randomid] = seqD[randomid]
         count = count + 1
     return newD
@@ -241,18 +241,18 @@ def random_split(filename_or_seqD,frac=0.5):
         seqD    = file2dict(filename_or_seqD)
     newD    = {}
     remainD = {}
-    ids = seqD.keys()
+    ids = list(seqD.keys())
     targetcount = int(frac * len(ids))
     count = 0
 
     while count< targetcount:
         randomid = ids[int(random.random()*len(ids))]
-        if newD.has_key(randomid): continue
+        if randomid in newD: continue
         newD[randomid] = seqD[randomid]
         count = count + 1
 
-    for id in seqD.keys():
-        if newD.has_key(id): continue
+    for id in list(seqD.keys()):
+        if id in newD: continue
         remainD[id] = seqD[id]
 
     return newD, remainD

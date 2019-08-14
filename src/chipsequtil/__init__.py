@@ -2,4 +2,4 @@
 This module needs documentation.
 """
 
-from chipsequtil import *
+from .chipsequtil import *

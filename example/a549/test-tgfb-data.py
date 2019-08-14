@@ -34,7 +34,7 @@ if __name__=='__main__':
     
     ##now ready to run commands
     if not opts.forest_only:
-        print gcmd
+        print(gcmd)
         res=os.system(gcmd)
         if res!=0:
             sys.exit('Error executing garnet, will not execute forest')
@@ -43,7 +43,7 @@ if __name__=='__main__':
         fcmd='python ../../scripts/forest.py --prize=%s --edge=%s --conf=%s --garnet=%s --outpath=%s --msgpath=%s'%(phos_weights,edge_file,forest_conf,garnet_output,forest_out,msgsteinerpath)
         if opts.rand:
             fcmd=fcmd+' --noisyEdges=20'
-        print '\n'+fcmd
+        print('\n'+fcmd)
         os.system(fcmd)
 
     else:
@@ -53,7 +53,7 @@ if __name__=='__main__':
         fcmd='python ../../scripts/forest.py --prize=%s --edge=%s --conf=%s  --outpath=%s --msgpath=%s'%(phos_weights,edge_file,forest_conf,forest_out,msgsteinerpath)
         if opts.rand:
             fcmd=fcmd+' --noisyEdges=50'
-        print '\n'+fcmd
+        print('\n'+fcmd)
 
         os.system(fcmd)
 

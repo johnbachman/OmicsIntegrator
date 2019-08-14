@@ -22,7 +22,7 @@ if __name__=='__main__':
     
     ##now ready to run commands
         
-    print gcmd
+    print(gcmd)
     os.system(gcmd)
 
     

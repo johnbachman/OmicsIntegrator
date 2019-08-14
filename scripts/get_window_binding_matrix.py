@@ -27,7 +27,7 @@ def build_annotated_tgm(closest_gene_output,distance_to_tss,logistic_score_outpu
     ##. ASSUMES GALAXY-formatted FASTA!!!!
     seq_mids=[] ##list of FASTA regions, in their appropriate order in the file
     filtered_events={}##gene name of closest gene to event within window
-    for k in seq_ids.keys():
+    for k in list(seq_ids.keys()):
         vals=k.split(';')
         if len(vals)==1:
     	    vals=k.split()
@@ -43,7 +43,7 @@ def build_annotated_tgm(closest_gene_output,distance_to_tss,logistic_score_outpu
         
         if len(vals)==3:            
             filtered_events[chr+':'+mid]=vals[2]
-    print 'Found %d events, of which %d have gene names'%(len(seq_mids),len(filtered_events))
+    print('Found %d events, of which %d have gene names'%(len(seq_mids),len(filtered_events)))
     ##this next section relies on xls 
     ##filter events that are within distance from closest_gene_output to get gene mapping
     ##
@@ -108,7 +108,7 @@ def build_annotated_tgm(closest_gene_output,distance_to_tss,logistic_score_outpu
 
     ##get gene ids, or just use mid of sequence region
     gene_names=[t for t in set(filtered_events.values())]
-    print gene_names[0:10]
+    print(gene_names[0:10])
 
     #get gene ids for all matrices list loaded in
     mi_files=motif_ids.split(',')
@@ -124,8 +124,8 @@ def build_annotated_tgm(closest_gene_output,distance_to_tss,logistic_score_outpu
                 #open file and read in extra ids
                 newfs=[a.strip() for a in open(f,'rU').readlines()]
             except:
-                print "Error opening file:", sys.exc_info()[0]
-                print "Check to make sure file exists at %s"%(f)
+                print("Error opening file:", sys.exc_info()[0])
+                print("Check to make sure file exists at %s"%(f))
                 raise
                
             if len(newfs)==len(all_tf_names):
@@ -148,9 +148,9 @@ def build_annotated_tgm(closest_gene_output,distance_to_tss,logistic_score_outpu
     
     ##now actually map events to scores
     ##load motif matrix scanning output that maps matrices to regions
-    print 'Loading complete motif score file...'
+    print('Loading complete motif score file...')
     event_scores=np.loadtxt(logistic_score_output)
-    print '\t...Loaded!'
+    print('\t...Loaded!')
                       
     #create new tgm matrix with approriate file name
     newmat=np.zeros((len(all_tf_names),len(gene_names)),dtype='float')##fill in gene length),dtype='float')
@@ -213,14 +213,14 @@ def build_annotated_tgm(closest_gene_output,distance_to_tss,logistic_score_outpu
         open(gin,'w').writelines([g+'\n' for g in gene_names])
         open(tin,'w').writelines([t+'\n' for t in all_tf_names])
     except:
-        print "Error opening file:", sys.exc_info()[0]
-        print "Check to make sure file exists at %s"%(closest_gene_output)
+        print("Error opening file:", sys.exc_info()[0])
+        print("Check to make sure file exists at %s"%(closest_gene_output))
         raise
     
     if pkl_file!='':
         zipcmd='python '+os.path.join(progdir,'zipTgms.py')+' '+tgm_file+' '+tin+' '+gin+' --pkl='+pkl_file
-        print 'Compressing matrix file into pkl'
-        print zipcmd
+        print('Compressing matrix file into pkl')
+        print(zipcmd)
         os.system(zipcmd)
         return pkl_file
     else:
@@ -242,7 +242,7 @@ def main():
     opts,args=parser.parse_args()
 
     if len(args)!=3:
-        print usage
+        print(usage)
         exit('Not enough arguments')
 
     logistic_score_output,closest_gene_output,fasta_file=args

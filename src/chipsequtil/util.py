@@ -116,7 +116,7 @@ class CBOrdTree:
             pass
         else:
             self.printTree(root.left)
-            print root.data,
+            print(root.data, end=' ')
             self.printTree(root.right)
 
     def printRevTree(self, root):
@@ -126,6 +126,6 @@ class CBOrdTree:
             pass
         else:
             self.printRevTree(root.right)
-            print root.data,
+            print(root.data, end=' ')
             self.printRevTree(root.left)
 

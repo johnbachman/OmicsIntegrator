@@ -4,7 +4,7 @@ a motif can be instantiated by providing an ambiguity code, a set of aligned DNA
 sequences, or from matrices of counts, probabilities or log-likelihoods (akaPSSMs).
 
 >>> m =  MotifTools.Motif_from_text('TGAAACANNSYWT')
->>> print m.oneletter()
+>>> print(m.oneletter())
 TGAAACA..sywT 
 
 Lower case reflects lower information content.  For a more detailed view of the distribution
@@ -28,18 +28,18 @@ of information, try this::
 Motif objects may be manipulated largely like text strings (with pythonic
 indexing)::
 
-    >>> print m[4:5].oneletter
+    >>> print(m[4:5].oneletter)
     A 
-    >>> print m[4:7].oneletter
+    >>> print(m[4:7].oneletter)
     ACA 
-    >>> print (m[4:7] + m[1:2]).oneletter
+    >>> print((m[4:7] + m[1:2]).oneletter)
     ACAG
-    >>> print (m[4:7] + m[1:7]).oneletter
+    >>> print((m[4:7] + m[1:7]).oneletter)
     ACAGAAACA
 
 and even padded with blanks::
 
-    >>> print  m[-4:7]
+    >>> print(m[-4:7])
     ...TGAAACA
 
 .. Copyright (2005) Whitehead Institute for Biomedical Research
@@ -64,7 +64,7 @@ pysum = sum
 from random import random,shuffle
 from subprocess import call
 
-from chipsequtil import reverse_complement
+from .chipsequtil import reverse_complement
 class MotifToolsException(Exception) : pass
 
 one2two = {  'W':'AT',    'M':'AC',   'R':'AG',
@@ -253,7 +253,7 @@ class Motif:
         '''return minimal list of seqs that represent consensus '''
         seqs = [[], []]
         for letter in self.oneletter:
-            if one2two.has_key(letter):
+            if letter in one2two:
                 seqs[0].append(one2two[letter][0])
                 seqs[1].append(one2two[letter][1])
             else:
@@ -311,7 +311,7 @@ class Motif:
             Df   = {'A': 0, 'C': 0, 'T': 0, 'G': 0}
             DlogP= {'A': 0, 'C': 0, 'T': 0, 'G': 0}
 
-            for nuc in self.counts[i].keys():
+            for nuc in list(self.counts[i].keys()):
 
                 #print i,nuc,self.counts[i][nuc],self.nseqs
                 # Dll[nuc] = log2( position nucleotide count/background sequence count )
@@ -459,14 +459,14 @@ class Motif:
             tots.append(tot)
         for i in range(self.width):
             s = []
-            _l = bits[i].keys()
+            _l = list(bits[i].keys())
             _l.sort(lambda x,y,D=bits[i]: cmp(D[y],D[x]))
             for key in _l:
                 for j in range(int(bits[i][key] / norm * height)):
                     s.append(key)
             str.append(''.join(s))
         fmt = '%%%ds'%height
-        print '#  %s'%('-'*self.width)
+        print('#  %s'%('-'*self.width))
         for h in range(int(height)):
             sys.stdout.write("#  ")
             for i in range(self.width):
@@ -477,14 +477,14 @@ class Motif:
                 sys.stdout.write(' -- %4.2f bits\n'%(norm/height))
             else:
                 sys.stdout.write('\n')
-        print '#  %s'%('-'*self.width)
-        print '#  %s'%self.oneletter
+        print('#  %s'%('-'*self.width))
+        print('#  %s'%self.oneletter)
 
     def _compute_ambig_ll(self):
         """extend log-likelihood matrix to include ambiguity codes
         e.g.  What the score of a 'S'?  Here we use the max of C and G."""
         for Dll in self.ll:
-            for L in one2two.keys():
+            for L in list(one2two.keys()):
                 Dll[L] = max(Dll[one2two[L][0]],  Dll[one2two[L][1]] )
             Dll['N'] = 0.0
             Dll['B'] = 0.0
@@ -506,14 +506,14 @@ class Motif:
                 _omit = prevlett[letter]
                 for L in ACGT:
                     if L != _omit: D[L] = 0.3333
-            elif one2two.has_key(letter):  #Covers WSMYRK
+            elif letter in one2two:  #Covers WSMYRK
                 for L in list(one2two[letter]):
                     D[L] = 0.5
             elif letter == 'N':
-                for L in D.keys():
+                for L in list(D.keys()):
                     D[L] = self.background[L]
             elif letter == '@':
-                for L in D.keys():
+                for L in list(D.keys()):
                     D[L] = self.background[L]-(0.0001)
                 D['A'] = D['A'] + 0.0004
             else:
@@ -528,7 +528,7 @@ class Motif:
         counts = []
         for pos in self.logP:
             D = {}
-            for L,lp in pos.items():
+            for L,lp in list(pos.items()):
                 D[L] = math.pow(2.0,lp)
             counts.append(D)
         self.background = bg
@@ -547,15 +547,15 @@ class Motif:
         maxcount = 0
         #Determine Biggest column
         for col in countmat:
-            tot = pysum(col.values())
+            tot = pysum(list(col.values()))
             if tot > maxcount :
                 maxcount = tot
 
         #Pad counts of remaining columns
         for col in countmat:
-            tot = pysum(col.values())
+            tot = pysum(list(col.values()))
             pad = maxcount - tot
-            for L in col.keys():
+            for L in list(col.keys()):
                 col[L] = col[L] + pad * self.background.get(L,0.)
 
         self.nseqs = maxcount
@@ -566,10 +566,10 @@ class Motif:
             multfactor = {}
             bgprob = self.background
             pcounts= {}
-            for L in bgprob.keys():
+            for L in list(bgprob.keys()):
                 pcounts[L] = beta*bgprob[L]*nseqs 
             for i in range(self.width):
-                for L in countmat[i].keys():
+                for L in list(countmat[i].keys()):
                     _t = (countmat[i][L] + pcounts[L]) #Add pseudo
                     _t = _t / (1.0 + beta)    #Renomalize
                     countmat[i][L] = _t
@@ -640,37 +640,37 @@ class Motif:
 
     def _print_ll(self):
         """print log-likelihood (scoring) matrix"""
-        print "#  ",
+        print("#  ", end=' ')
         for i in range(self.width):
-            print "  %4d   "%i,
-        print
+            print("  %4d   "%i, end=' ')
+        print()
         for L in ['A', 'C', 'T', 'G']:
-            print "#%s "%L,
+            print("#%s "%L, end=' ')
             for i in range(self.width):
-                print  "%8.3f "%self.ll[i][L],
-            print
+                print("%8.3f "%self.ll[i][L], end=' ')
+            print()
     def _print_p(self):
         """print probability (frequency) matrix"""
-        print "#  ",
+        print("#  ", end=' ')
         for i in range(self.width):
-            print "  %4d   "%i,
-        print
+            print("  %4d   "%i, end=' ')
+        print()
         for L in ['A', 'C', 'T', 'G']:
-            print "#%s "%L,
+            print("#%s "%L, end=' ')
             for i in range(self.width):
-                print  "%8.3f "%math.pow(2,self.logP[i][L]),
-            print
+                print("%8.3f "%math.pow(2,self.logP[i][L]), end=' ')
+            print()
     def _print_counts(self):
         """print count matrix"""
-        print "#  ",
+        print("#  ", end=' ')
         for i in range(self.width):
-            print "  %4d   "%i,
-        print
+            print("  %4d   "%i, end=' ')
+        print()
         for L in ['A', 'C', 'T', 'G']:
-            print "#%s "%L,
+            print("#%s "%L, end=' ')
             for i in range(self.width):
-                print  "%8.3f "%self.counts[i][L],
-            print
+                print("%8.3f "%self.counts[i][L], end=' ')
+            print()
         
     def _maxscore(self):
         """sets self.maxscore and self.minscore"""
@@ -699,7 +699,7 @@ class Motif:
     def bestscanseq(self,seq):
         """return score,sequence of the best match to the motif in the supplied sequence"""
         matches,endpoints,scores = self.scan(seq,-100)
-        t = zip(scores,matches)
+        t = list(zip(scores,matches))
         t.sort()
         bestseq   = t[-1][1]
         bestscore = t[-1][0]
@@ -750,9 +750,9 @@ class Motif:
         ll = self.ll
         sum = 0
         width        = self.width
-        width_r      = range(width)
-        width_rcr    = range(width-1,-1,-1)
-        width_ranges = zip(width_r,width_rcr)
+        width_r      = list(range(width))
+        width_rcr    = list(range(width-1,-1,-1))
+        width_ranges = list(zip(width_r,width_rcr))
         seqcomp      = seq.translate(revcompTBL)
 
         total = 0
@@ -797,9 +797,9 @@ class Motif:
         endpoints     = []
         scores        = []
         width         = self.width
-        width_r       = range(width)
-        width_rcr     = range(width-1,-1,-1)
-        width_ranges  = zip(width_r,width_rcr)
+        width_r       = list(range(width))
+        width_rcr     = list(range(width-1,-1,-1))
+        width_ranges  = list(zip(width_r,width_rcr))
 
         seqcomp = seq.translate(revcompTBL)
 
@@ -813,14 +813,14 @@ class Motif:
 
             if 0 and total_f > 1:
                 for i,ir in width_ranges:
-                    print seq[offset+i],'%6.3f'%ll[i ][        seq[offset+i] ],'   ',
-                print '= %7.3f'%total_f
+                    print(seq[offset+i],'%6.3f'%ll[i ][        seq[offset+i] ],'   ', end=' ')
+                print('= %7.3f'%total_f)
                 
             if 0:
-                print "\t\t%s vs %s: F=%6.2f R=%6.2f %6.2f %4.2f"%(seq[offset:offset+self.width],
+                print("\t\t%s vs %s: F=%6.2f R=%6.2f %6.2f %4.2f"%(seq[offset:offset+self.width],
                                                                    self.oneletter,total_f,total_r,
                                                                    self.maxscore,
-                                                                   max([total_f,total_r])/self.maxscore)
+                                                                   max([total_f,total_r])/self.maxscore))
             if total_f > threshold and ((total_f > total_r) or forw_only):
                 endpoints.append( (offset,offset+self.width-1) )
                 scores.append(total_f)
@@ -849,9 +849,9 @@ class Motif:
                 total_f = total_f + ll[i+offset      ][        seq[i] ]
                 total_r = total_r + ll[w-(i+offset)-1][revcomp[seq[i]]]
             if 0:
-                print "\t\t%s vs %s: F=%6.2f R=%6.2f %6.2f %4.2f"%(seq, self.oneletter[offset:offset+len(seq)],
+                print("\t\t%s vs %s: F=%6.2f R=%6.2f %6.2f %4.2f"%(seq, self.oneletter[offset:offset+len(seq)],
                                                                    total_f, total_r,  maximum,
-                                                                   max([total_f,total_r])/self.maxscore)
+                                                                   max([total_f,total_r])/self.maxscore))
             if total_f > threshold and total_f > total_r:
                 endpoints.append( (offset,offset+self.width-1) )
                 scores.append(total_f)
@@ -902,19 +902,19 @@ class Motif:
         """Overloads the '-' operator to compute the Euclidean distance between
         probability matrices motifs of equal width."""
         if type(other) != type(self):
-            print "computing distance of unlike pssms (types %s, %s)"%(
-                type(other),type(self))
-            print 'First: %s'%other
-            print 'Self:  %s'%self
+            print("computing distance of unlike pssms (types %s, %s)"%(
+                type(other),type(self)))
+            print('First: %s'%other)
+            print('Self:  %s'%self)
             sys.exit(1)
         if other.width != self.width:
-            print "computing distance of unlike pssms (width %d != %d)"%(
-                other.width,self.width)
+            print("computing distance of unlike pssms (width %d != %d)"%(
+                other.width,self.width))
             sys.exit(1)
         D = 0
         FABS = math.fabs
         POW  = math.pow
-        for L in self.logP[0].keys():
+        for L in list(self.logP[0].keys()):
             for i in range(self.width):
                 D = D + POW( POW(2,self.logP[i][L]) - POW(2,other.logP[i][L]), 2 )
                 #D = D + FABS( POW(2,self.logP[i][L]) - POW(2,other.logP[i][L]))
@@ -1007,7 +1007,7 @@ class Motif:
         if not self._bestseqs: self._bestseqs = self.bestseqs()
         seqs   = self._bestseqs
         pos = int(random() * len(seqs))
-        print 'Random: ',self.oneletter,seqs[pos][1]
+        print('Random: ',self.oneletter,seqs[pos][1])
         return seqs[pos][1]
 
     def __getitem__(self,tup):
@@ -1016,7 +1016,7 @@ class Motif:
         m.__getitem__(tup) -- Overload m[a,b] to submotif.  Less pythonish than [:], but more reliable
         """
         if len(tup) != 2:
-            print "Motif[i,j] requires two arguments, not ",tup
+            print("Motif[i,j] requires two arguments, not ",tup)
         else:
             beg, end = tup[0], tup[1]
             return submotif(self,beg,end)
@@ -1085,8 +1085,8 @@ class Motif:
 
         for p in range(0): #Was 5
             for i in range(len(m)):
-                print '%6.4f  '%m[i][p],
-            print
+                print('%6.4f  '%m[i][p], end=' ')
+            print()
 
         seqs=[]
         for seqnum in range(count+1):
@@ -1109,8 +1109,8 @@ class Motif:
 def minwindowdiff(M1,M2,overlap=5,diffmethod='diff'):
     #Alternate method: maskdiff, infomaskdiff
     if type(M1) != type(M2):
-        print "Error: Attempted to compute alignment of objects that are not both Motifs"
-        print "       types %s: %s  and %s: %s"%(M1,type(M1),M2,type(M2))
+        print("Error: Attempted to compute alignment of objects that are not both Motifs")
+        print("       types %s: %s  and %s: %s"%(M1,type(M1),M2,type(M2)))
         sys.exit(1)
 
     if M1.width <= M2.width: A = M1; Borig = M2
@@ -1141,8 +1141,8 @@ def minwindowdiff(M1,M2,overlap=5,diffmethod='diff'):
 def minaligndiff(M1,M2,overlap=5,diffmethod='diff'):
     #Alternate method: maskdiff, infomaskdiff
     if type(M1) != type(M2):
-        print "Error: Attempted to compute alignment of objects that are not both Motifs"
-        print "       types %s: %s  and %s: %s"%(M1,type(M1),M2,type(M2))
+        print("Error: Attempted to compute alignment of objects that are not both Motifs")
+        print("       types %s: %s  and %s: %s"%(M1,type(M1),M2,type(M2)))
         sys.exit(1)
 
     if M1.width <= M2.width:
@@ -1229,14 +1229,14 @@ The default is 'diff'.
 def diff(self,other):
     """psuedo-Euclidean (sum_col(sqrt(norm(sum_row)))/#col"""
     if type(other) != type(self):
-        print "computing distance of unlike pssms (types %s, %s)"%(
-            type(other),type(self))
-        print 'First: %s'%other
-        print 'Self:  %s'%self
+        print("computing distance of unlike pssms (types %s, %s)"%(
+            type(other),type(self)))
+        print('First: %s'%other)
+        print('Self:  %s'%self)
         sys.exit(1)
     if other.width != self.width:
-        print "computing distance of unlike pssms (width %d != %d)"%(
-            other.width,self.width)
+        print("computing distance of unlike pssms (width %d != %d)"%(
+            other.width,self.width))
         sys.exit(1)
     POW     = math.pow
     Dtot    = 0
@@ -1253,14 +1253,14 @@ def maskdiff(self,other):
     """diff, but excluding positions with 'N' in m2. Return pseudo-Euclidean
     distance, but only include columns that are not background."""
     if type(other) != type(self):
-        print "computing distance of unlike pssms (types %s, %s)"%(
-            type(other),type(self))
-        print 'First: %s'%other
-        print 'Self:  %s'%self
+        print("computing distance of unlike pssms (types %s, %s)"%(
+            type(other),type(self)))
+        print('First: %s'%other)
+        print('Self:  %s'%self)
         sys.exit(1)
     if other.width != self.width:
-        print "computing distance of unlike pssms (width %d != %d)"%(
-            other.width,self.width)
+        print("computing distance of unlike pssms (width %d != %d)"%(
+            other.width,self.width))
         sys.exit(1)
 
     Dtot = 0
@@ -1290,14 +1290,14 @@ def infomaskdiff(self,other):
     """Return pseudo-Euclidean distance, but scale column distance by
     information content of "other".  Used by THEME"""
     if type(other) != type(self):
-        print "computing distance of unlike pssms (types %s, %s)"%(
-            type(other),type(self))
-        print 'First: %s'%other
-        print 'Self:  %s'%self
+        print("computing distance of unlike pssms (types %s, %s)"%(
+            type(other),type(self)))
+        print('First: %s'%other)
+        print('Self:  %s'%self)
         sys.exit(1)
     if other.width != self.width:
-        print "computing distance of unlike pssms (width %d != %d)"%(
-            other.width,self.width)
+        print("computing distance of unlike pssms (width %d != %d)"%(
+            other.width,self.width))
         sys.exit(1)
 
     maxbits = math.log( 1.0/min(other.background.values()) ) / math.log(2.0)
@@ -1325,14 +1325,14 @@ def infomaskdiff(self,other):
 def diverge(self,other):
     """Yet another distance metric"""
     if type(other) != type(self):
-        print "computing distance of unlike pssms (types %s, %s)"%(
-            type(other),type(self))
-        print 'First: %s'%other
-        print 'Self:  %s'%self
+        print("computing distance of unlike pssms (types %s, %s)"%(
+            type(other),type(self)))
+        print('First: %s'%other)
+        print('Self:  %s'%self)
         sys.exit(1)
     if other.width != self.width:
-        print "computing distance of unlike pssms (width %d != %d)"%(
-            other.width,self.width)
+        print("computing distance of unlike pssms (width %d != %d)"%(
+            other.width,self.width))
         sys.exit(1)
 
     Dtot = 0
@@ -1390,7 +1390,7 @@ def bestseqs(motif,thresh, seq='',score=0,depth=0,bestcomplete=None,SEQS=[]):
         #    thresh = 1000.0 # Return Early, You don't really want all these sequences, do you?
         return
     if depth==-1:
-        print '# %-10s %6.3f %6.3f %2d'%(seq, score, bestcomplete[depth], depth)
+        print('# %-10s %6.3f %6.3f %2d'%(seq, score, bestcomplete[depth], depth))
     if score + bestcomplete[depth] < thresh: return
     #if depth > 0 and len(SEQS) > 2000:
     #    return
@@ -1440,16 +1440,16 @@ def top_nmers(N,seqs,with_counts = 0,purge_Ns = ''):
             _t = [Nmer, NmerRC]
             _t.sort()
             NmerKey = _t[0]        # _t used until here to get alphabetically first seq
-            if Nmers.has_key(NmerKey):
+            if NmerKey in Nmers:
                 Nmers[NmerKey] = Nmers[NmerKey] + 1
             else:
                 Nmers[NmerKey] = 1
-    sorted = Nmers.keys()
+    sorted = list(Nmers.keys())
     sorted.sort(lambda x,y,D=Nmers:cmp(D[y],D[x]) or cmp(x,y))
     #for i in range(10):
     #    print "# %2d  %s %d"%(i,sorted[i],Nmers[sorted[i]])
     if with_counts:
-        return zip(sorted,map(lambda x,N=Nmers:N[x], sorted))
+        return list(zip(sorted,list(map(lambda x,N=Nmers:N[x], sorted))))
     else:
         return sorted
 
@@ -1480,13 +1480,13 @@ def compare_seqs(s1, s2):
         long  = s2
         short = s1
     (maxcount,max_i) = (0,0)
-    for i in range(len(long)-len(short)+1):
+    for i in range(len(int)-len(short)+1):
         idcount_f = 0
         idcount_r = 0
         for j in range(len(short)):
-            if short[j] == long[i+j]:
+            if short[j] == int[i+j]:
                 idcount_f = idcount_f + 1
-            if short[-(j+1)] == revcomp[long[i+j]]:
+            if short[-(j+1)] == revcomp[int[i+j]]:
                 idcount_r = idcount_r + 1
         if (idcount_f > maxcount and idcount_f >= idcount_r):
             maxcount = idcount_f
@@ -1496,8 +1496,8 @@ def compare_seqs(s1, s2):
             max_i    = i
         #print i,j,idcount_f,idcount_r,maxcount
     maxfrac = float(maxcount) / len(short)
-    print maxfrac,maxcount,len(short)
-    return maxfrac,short,long[max_i:max_i+len(short)]
+    print(maxfrac,maxcount,len(short))
+    return maxfrac,short,int[max_i:max_i+len(short)]
 
 def shuffle_bases(m):
     """return a new motif object in which the probabilities are randomly
@@ -1506,7 +1506,7 @@ def shuffle_bases(m):
     letts = list('ACGT')
     for i in range(m.width):
         D = {}
-        vals = m.counts[i].values()
+        vals = list(m.counts[i].values())
         shuffle(vals)
         for i in range(4):
             D[letts[i]] = vals[i]
@@ -1717,7 +1717,7 @@ def merge(A,B,overlap=0):
     of overlapping bases between them.
     """
     if (overlap < 0 or overlap > A.width or overlap >B.width):
-        print 'Cannot overlap %s with %s by %d bases'%(A.oneletter,B.oneletter,overlap)
+        print('Cannot overlap %s with %s by %d bases'%(A.oneletter,B.oneletter,overlap))
         return None
 
     #Build Probability matrix.  Width will be A.width + B.width - overlap
@@ -1728,7 +1728,7 @@ def merge(A,B,overlap=0):
     for i in range(A.width):
         D = {}
         logP = A.logP[i]
-        for L in logP.keys():
+        for L in list(logP.keys()):
             D[L] = math.pow(2,logP[L])
         P.append(D)
     #Add B's first 'overlap' probabilities to last 'overlap' probabilities of P
@@ -1736,17 +1736,17 @@ def merge(A,B,overlap=0):
         logP = B.logP[i]
         Pidx = len(P)-overlap+i
         _tot = 0
-        for L in logP.keys():
+        for L in list(logP.keys()):
             P[Pidx][L] = (P[Pidx][L] + math.pow(2,logP[L])) / 2.0
             P[Pidx][L] = max(P[Pidx][L],math.pow(2,logP[L]))
             _tot = _tot + P[Pidx][L]
-        for L in logP.keys():
+        for L in list(logP.keys()):
             P[Pidx][L] = P[Pidx][L] / _tot
     #Append B's remaining probabilites to P
     for i in range(overlap,B.width):
         D = {}
         logP = B.logP[i]
-        for L in logP.keys():
+        for L in list(logP.keys()):
             D[L] = math.pow(2,logP[L])
         P.append(D)
         
@@ -1886,7 +1886,7 @@ def load(filename):
     for i in range(len(motifs)):
         if seedfile: motifs[i].seedfile = seedfile
         seednum = motifs[i].seednum
-        if seedD.has_key(seednum):
+        if seednum in seedD:
             motifs[i].seedtxt = seedD[seednum]
     return motifs
     
@@ -1897,7 +1897,7 @@ def save_motifs(motifs,filename,kmer_count=20):
     try :
         print_motifs(motifs,kmer_count,f=filename)
     except:
-        print '!-- Error saving motifs to %s'%filename
+        print('!-- Error saving motifs to %s'%filename)
         raise
     
 def print_motif(motif,kmer_count=20,istart=0,f=None):
@@ -1922,51 +1922,51 @@ def print_motifs(motifs,kmer_count=20,istart=0,f=None):
     i = istart-1
     for m in motifs:
         i = i + 1
-        print >>f,  "Log-odds matrix for Motif %3d %s"%(i,m)
+        print("Log-odds matrix for Motif %3d %s"%(i,m), file=f)
         m._print >>f, _ll()
         #print >>f,  "Probability matrix for Motif %3d %s"%(i,m)
         #m._print >>f, _p()
-        print >>f,  "Sequence Logo"
+        print("Sequence Logo", file=f)
         m._print >>f, _bits()
         for newprop in ('gamma', 'church', 'E_site', 'E_seq', 'E_chi2', 'realpvalue',
                         'kellis', 'MNCP', 'ROC_auc', 'CRA', 'Cfrac', 'frac', 'binomial'):
-            if not m.__dict__.has_key(newprop):   #Kludge to deal w/ old shelves
+            if newprop not in m.__dict__:   #Kludge to deal w/ old shelves
                 m.__dict__[newprop] = None
-        if m.seedtxt:  print >>f,  "Seed: %3d %s"%(i,m.seedtxt)
-        if m.gamma:    print >>f,  "Gamma: %7.5f"%m.gamma
-        if m.evalue != None: print >>f,  'Evalue: %6.3e'%m.evalue
+        if m.seedtxt:  print("Seed: %3d %s"%(i,m.seedtxt), file=f)
+        if m.gamma:    print("Gamma: %7.5f"%m.gamma, file=f)
+        if m.evalue != None: print('Evalue: %6.3e'%m.evalue, file=f)
         if m.progscore is not None :
             printableProgscore=(m.progscore[0],str(m.progscore[1]))
-            print >>f,  'Program specific score: '+ ": ".join(printableProgscore)
+            print('Program specific score: '+ ": ".join(printableProgscore), file=f)
 
-        if m.family:   print >>f,  "Family: ",m.family
-        if m.source:   print >>f,  "Source: ",m.source
-        if m.dataset:  print >>f,  "fasta file: %s beta: %f background sequences: %s"%(m.dataset,m.beta,m.bgfile)
-        if m.match_thresh: print >>f,  "SVM match threshold: ",m.match_thresh
-        if m.cverror:  print >>f,  "classification error: ",m.cverror
+        if m.family:   print("Family: ",m.family, file=f)
+        if m.source:   print("Source: ",m.source, file=f)
+        if m.dataset:  print("fasta file: %s beta: %f background sequences: %s"%(m.dataset,m.beta,m.bgfile), file=f)
+        if m.match_thresh: print("SVM match threshold: ",m.match_thresh, file=f)
+        if m.cverror:  print("classification error: ",m.cverror, file=f)
         #Motif   0 NGAGGGGGNN (0)            (Bits:   8.24   MAP:   6.53   D:  0.21  0)  Enr: 54.000 
-        print >>f,  "Motif %3d %-25s (Bits: %5.2f  MAP: %5.2f   D: %5.3f  %2d) E: %6.3f"%(
-            i, m, m.totalbits, m.MAP, m.seeddist, m.seednum, nlog10(m.pvalue)),
-        if m.binomial!=None:  print >>f,  ' Bi: %5.2f'%nlog10(m.binomial),
-        if m.church != None:  print >>f,  ' ch: %5.2f'%nlog10(m.church),
-        if m.frac   != None:  print >>f,  ' f: %5.2f'%(m.frac),
-        if m.E_site != None:  print >>f,  ' Es: %5.2f'%nlog10(m.E_site),
-        if m.E_seq != None:  print >>f,  ' Eq: %5.2f'%(nlog10(m.E_seq)),
-        if m.MNCP   != None:  print >>f,  ' mn: %5.2f'%(m.MNCP),
-        if m.ROC_auc!= None:  print >>f,  ' Ra: %6.4f'%(m.ROC_auc),
+        print("Motif %3d %-25s (Bits: %5.2f  MAP: %5.2f   D: %5.3f  %2d) E: %6.3f"%(
+            i, m, m.totalbits, m.MAP, m.seeddist, m.seednum, nlog10(m.pvalue)), end=' ', file=f)
+        if m.binomial!=None:  print(' Bi: %5.2f'%nlog10(m.binomial), end=' ', file=f)
+        if m.church != None:  print(' ch: %5.2f'%nlog10(m.church), end=' ', file=f)
+        if m.frac   != None:  print(' f: %5.2f'%(m.frac), end=' ', file=f)
+        if m.E_site != None:  print(' Es: %5.2f'%nlog10(m.E_site), end=' ', file=f)
+        if m.E_seq != None:  print(' Eq: %5.2f'%(nlog10(m.E_seq)), end=' ', file=f)
+        if m.MNCP   != None:  print(' mn: %5.2f'%(m.MNCP), end=' ', file=f)
+        if m.ROC_auc!= None:  print(' Ra: %6.4f'%(m.ROC_auc), end=' ', file=f)
         if m.E_chi2 != None:
             if m.E_chi2 == 0: m.E_chi2=1e-20
-            print >>f,  ' x2: %5.2f'%(nlog10(m.E_chi2)),
-        if m.CRA    != None:  print >>f,  ' cR: %6.4f'%(m.CRA),
-        if m.Cfrac  != None:  print >>f,  ' Cf: %6.4f'%(m.Cfrac),
-        if m.realpvalue != None: print >>f,  ' P: %6.4e'%(m.realpvalue)
-        if m.kellis != None:  print >>f,  ' k: %5.2f'%(m.kellis),
+            print(' x2: %5.2f'%(nlog10(m.E_chi2)), end=' ', file=f)
+        if m.CRA    != None:  print(' cR: %6.4f'%(m.CRA), end=' ', file=f)
+        if m.Cfrac  != None:  print(' Cf: %6.4f'%(m.Cfrac), end=' ', file=f)
+        if m.realpvalue != None: print(' P: %6.4e'%(m.realpvalue), file=f)
+        if m.kellis != None:  print(' k: %5.2f'%(m.kellis), end=' ', file=f)
         try:
-            if m.numbound      :  print >>f,  ' b: %3d'%(m.numbound),
-            if m.nummotif      :  print >>f,  ' nG: %3d'%(m.nummotif),
-            if m.numboundmotif :  print >>f,  ' bn: %3d'%(m.numboundmotif),
+            if m.numbound      :  print(' b: %3d'%(m.numbound), end=' ', file=f)
+            if m.nummotif      :  print(' nG: %3d'%(m.nummotif), end=' ', file=f)
+            if m.numboundmotif :  print(' bn: %3d'%(m.numboundmotif), end=' ', file=f)
         except: pass
-        print >>f, ''
+        print('', file=f)
 
         _max = m.maxscore
         m.maxscore = -100
@@ -1976,11 +1976,11 @@ def print_motifs(motifs,kmer_count=20,istart=0,f=None):
             seqs = m.seqs
 
         for seq in seqs:
-            print >>f,  seq,i,m.scan(seq)[2][0]
+            print(seq,i,m.scan(seq)[2][0], file=f)
 
         m.maxscore = _max
-        print >>f,  '*'*m.width
-        print >>f,  "MAP Score: %f"%(m.MAP)
+        print('*'*m.width, file=f)
+        print("MAP Score: %f"%(m.MAP), file=f)
 
 def nlog10(x,min=1e-323):
     """returns -log10(x) with a maximum default value of 323."""
@@ -2010,7 +2010,7 @@ def txt2motifs(txt,VERBOSE=1):
             return pickletxt2motifs(toks)
         else:                         #It's a "Motif" file!!
             if VERBOSE:
-                print "# Loading motif from %s"%fname
+                print("# Loading motif from %s"%fname)
             allmotifs = load(fname)
         if len(toks) == 1: motifs = allmotifs
         else:
@@ -2027,7 +2027,7 @@ def txt2motifs(txt,VERBOSE=1):
 def pickletxt2motifs(toks):
     """[Utility function] See txt2motifs documentation."""
     fname = toks[0]
-    print "# Loading motif pickle from %s"%fname
+    print("# Loading motif pickle from %s"%fname)
     F = open(fname,'r')
     DA = pickle.load(F)
     F.close()
@@ -2037,8 +2037,8 @@ def pickletxt2motifs(toks):
             keys = [x.replace('%',' ') for x in toks[1].split(',')]
             for k in keys: ans.append(DA[k])
         else:
-            for k in DA.keys(): DA[k].key = k
-            ans = DA.values()
+            for k in list(DA.keys()): DA[k].key = k
+            ans = list(DA.values())
     else: #Assuming DA is a list
         if len(toks) > 1:
             idxs = [int(x) for x in toks[1].split(',')]
@@ -2053,12 +2053,13 @@ def sortby(motiflist, property, REV=0):
     mtype = type(Motif())
     for m in motiflist:
         if type(m) != mtype:
-            print "Not a Motif Object: ",m
+            print("Not a Motif Object: ",m)
             return
     try:
         motiflist.sort(lambda x,y,p=property: cmp(x.__dict__[p],y.__dict__[p]))
         if REV: motiflist.reverse()
     except:
-        print 'Could not sort list.  Probably, the specificied property "%s" is not posessed by all motifs'%property
+        print('Could not sort list.  Probably, the specificied property "%s" is not posessed by all motifs'%property)
     
+
 

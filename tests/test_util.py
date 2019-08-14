@@ -24,7 +24,7 @@ def write_conf(fh, params):
     fh - a file-like object
     params - the values of w, b, D and optionally mu, garnetBeta, noise, r, g.
     '''
-    for k,v in params.iteritems():
+    for k,v in params.items():
         if k == 'D' or k == 'processes':
           fh.write('%s = %d\n' % (k, v))
         else:

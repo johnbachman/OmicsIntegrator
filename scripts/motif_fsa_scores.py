@@ -11,7 +11,7 @@ __email__="sgosline@mit.edu"
 from optparse import OptionParser
 
 #import chipsequtil.Fasta as Fasta
-import cPickle
+import pickle
 import numpy as np
 import math,sys
 from multiprocessing import Pool
@@ -52,7 +52,7 @@ def motif_bestscan_matrix(F,motif,outfile,genome):
 
     fname=re.sub('.tamo','_source_names.txt',os.path.basename(motif))
     writeMotNames(m,fname)
-    seqs=F.values()
+    seqs=list(F.values())
     n_seqs=len(seqs)
     n_motifs=len(m)
     SCORES=np.zeros((n_motifs,n_seqs),dtype='float')
@@ -90,16 +90,16 @@ def motif_matrix(F,motif,outfile,genome,ids,pkl,threads,typ):
     writeMotNames(m,fname)
 
 #    F=Fasta.load(fsa,key_func=lambda x:x)
-    seqs=F.values()
+    seqs=list(F.values())
     n_seqs=len(seqs)
     n_motifs=len(m)
     SCORES=np.zeros((n_motifs,n_seqs),dtype='float')
     
     #Load motif ids and profile pickle
     IDS=load_ids(ids)
-    PRF=cPickle.load(open(pkl))
+    PRF=pickle.load(open(pkl))
 
-    z=zip(m,IDS)
+    z=list(zip(m,IDS))
     jobs=[]
     p=Pool(threads)
     for Z in z: jobs.append([Z,PRF,genome,seqs,typ])
@@ -136,7 +136,7 @@ def numbs(args):
         bg={'A':0.25,'G':0.25,'C':0.25,'T':0.25}
 
     for pos in ll:
-        for letter in pos.keys():
+        for letter in list(pos.keys()):
             pos[letter] = pos[letter] - math.log(bg[letter])/math.log(2.0)
 
     AM = MotifTools.Motif_from_ll(ll)
@@ -201,7 +201,7 @@ def reduce_fasta(fsa_dict,gene_file,gene_list):
         include_genes=[a.strip().split()[0] for a in open(gene_list,'rU').readlines()]
         
     if len(include_genes)>0:
-        print 'Found %d genes in differential expression data, reducing FASTA to only include regions nearby'%(len(include_genes))
+        print('Found %d genes in differential expression data, reducing FASTA to only include regions nearby'%(len(include_genes)))
     
     count=0
     for g in closest_gene:
@@ -216,7 +216,7 @@ def reduce_fasta(fsa_dict,gene_file,gene_list):
             except:#this will work for GPS
                 midval = 'chr'+g['Position']
         mapped_mids.add(midval)
-        if 'geneSymbol' in g.keys():
+        if 'geneSymbol' in list(g.keys()):
             mid_to_gene[midval] = g['geneSymbol']
         else:
             mid_to_gene[midval] = g['knownGeneID']
@@ -225,7 +225,7 @@ def reduce_fasta(fsa_dict,gene_file,gene_list):
     new_seq={}    
   #  print ','.join([k for k in mapped_mids][0:10])
 
-    for k in fsa_dict.keys():
+    for k in list(fsa_dict.keys()):
         vals=k.split(';')
         if len(vals)==1:
             vals=k.split(' ')
@@ -239,7 +239,7 @@ def reduce_fasta(fsa_dict,gene_file,gene_list):
             allvals=vals[0].split('_')
             #            genome,chr,low,high,strand=vals[0].split('_')
             if(len(allvals)<4):
-                print 'Cannot find sequence data for '+vals[0]
+                print('Cannot find sequence data for '+vals[0])
             else:
                 genome=allvals[0]
                 chr=allvals[1]
@@ -252,7 +252,7 @@ def reduce_fasta(fsa_dict,gene_file,gene_list):
             # print seq_mid,mapped_mids[0]
             new_seq[k+' '+mid_to_gene[seq_mid]]=fsa_dict[k] ###****UPDATED: added gene name here, so don't have to map later....***
     
-    print 'Found '+str(len(new_seq))+' events from FASTA file that map to '+str(count)+' event-gene matches  and '+str(len(include_genes))+' genes out of '+str(len(fsa_dict))+' events'
+    print('Found '+str(len(new_seq))+' events from FASTA file that map to '+str(count)+' event-gene matches  and '+str(len(include_genes))+' genes out of '+str(len(fsa_dict))+' events')
 
     ##now write new fasta file
     Fasta.write(new_seq,re.sub('.xls','.fsa',gene_file))
@@ -297,7 +297,7 @@ def main():
     
     fsa_dict=Fasta.load(fsa,key_func=lambda x:x)
     if opts.gene_file!='':
-        print 'Reducing FASTA file to only contain sequences from '+opts.gene_file
+        print('Reducing FASTA file to only contain sequences from '+opts.gene_file)
         fsa_dict=reduce_fasta(fsa_dict,opts.gene_file,opts.genelist)
 
 

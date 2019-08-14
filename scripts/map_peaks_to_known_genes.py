@@ -76,7 +76,7 @@ def parse_gene_ref(ref_gene) :
         gene_ref[ref_dict['chrom']].append(ref_dict)
         gene_info[ref_dict['name']] = ref_dict
         #putting relevant information about the gene into our AVL tree based on the chromosome 
-        if ref_dict['chrom'] not in chrom_info.keys():
+        if ref_dict['chrom'] not in list(chrom_info.keys()):
             chrom_info[ref_dict['chrom']] = avl.AVLTree() #making a new instance of an AVL tree 
             if ref_dict['strand'] == '+':
                 chrom_info[ref_dict['chrom']].insert((ref_dict['promoter_coords'][0],ref_dict['downstream_coords'][1],ref_dict['name']))
@@ -91,9 +91,9 @@ def parse_gene_ref(ref_gene) :
     return gene_ref, gene_info, chrom_info
 
 def parse_gene_ref_line(l) :
-    l = map(parse_number, l) # coerce to numbers where possible
-    l[9] = map(parse_number, l[9].split(',')) # turn 'x,x,x,...' into list
-    l[10] = map(parse_number, l[10].split(','))
+    l = list(map(parse_number, l)) # coerce to numbers where possible
+    l[9] = list(map(parse_number, l[9].split(','))) # turn 'x,x,x,...' into list
+    l[10] = list(map(parse_number, l[10].split(',')))
     return l
 
 if __name__ == '__main__' :
@@ -146,8 +146,8 @@ if __name__ == '__main__' :
         try:
             peak_output = open(opts.peak_output,'w')
         except:
-            print "Error opening file:", sys.exc_info()[0]
-            print "Check to make sure file exists at %s"%(opts.peak_output)
+            print("Error opening file:", sys.exc_info()[0])
+            print("Check to make sure file exists at %s"%(opts.peak_output))
             raise
     else :
         peak_output = sys.stdout
@@ -167,8 +167,8 @@ if __name__ == '__main__' :
         try:
             symbol_xref_reader = DictReader(open(opts.symbol_xref,'rU'),fieldnames=kgXref_fieldnames,delimiter='\t')
         except:
-            print "Error opening file:", sys.exc_info()[0]
-            print "Check to make sure file exists at %s"%(opts.symbol_xref)
+            print("Error opening file:", sys.exc_info()[0])
+            print("Check to make sure file exists at %s"%(opts.symbol_xref))
             raise
         
         symbol_xref_map = {}
@@ -188,7 +188,7 @@ if __name__ == '__main__' :
            peak[fieldnames[0]] == fieldnames[0] or \
            peak[fieldnames[0]][0]=='track' : continue
 
-        for k,v in peak.items() : peak[k] = parse_number(v)
+        for k,v in list(peak.items()) : peak[k] = parse_number(v)
 
         # MACS output gives us summit
         if opts.peaks_fmt == 'MACS' :
@@ -211,13 +211,13 @@ if __name__ == '__main__' :
         if peak['name'] == '.' or type(peak['name']) is int:     #if the peak does not have a name then assign it one based on the number of peaks we have seen so far  
             peak['name'] = 'Peak_number_' + str(peak_number) 
             if peak_number % 10000 == 0: 
-                print peak['name']
+                print(peak['name'])
 
-        if peak['name'] in peak_info.keys():            #if two peaks have the same ID, change it so they are not identical
+        if peak['name'] in list(peak_info.keys()):            #if two peaks have the same ID, change it so they are not identical
             peak['name'] = (peak['name']) + 'd'
 
         peak_info[peak['name']] = peak                      
-        if peak['chrom'] not in chrom_peaks.keys():
+        if peak['chrom'] not in list(chrom_peaks.keys()):
             chrom_peaks[peak['chrom']] = [(peak[start_field], peak['name'])]
         else: 
             chrom_peaks[peak['chrom']].append((peak[start_field], peak['name']))
@@ -232,7 +232,7 @@ if __name__ == '__main__' :
     if totalrows > 100000:
         interval = 10000
 
-    print '\nParsing %d rows from peak file and will provide update every %d rows'%(totalrows,interval)
+    print('\nParsing %d rows from peak file and will provide update every %d rows'%(totalrows,interval))
  
     peaks_without_genes = []
     genes_without_peaks = []
@@ -245,7 +245,7 @@ if __name__ == '__main__' :
 
             rowcount+=1
             if rowcount % interval ==0:
-                print 'Processing row %d out of %d...'%(rowcount,totalrows)
+                print('Processing row %d out of %d...'%(rowcount,totalrows))
 
             if chrom not in chrom_info:
                 sys.stderr.write('WARNING: peak chromosome %s not found in gene reference, skipping: %s\n'%(peak[chr_field],peak))
@@ -333,7 +333,7 @@ if __name__ == '__main__' :
                 # now we check for upstream/downstream areas if we are not using the opts.tss
                 elif peak_loc >= gene_coords[0] and peak_loc <= gene_coords[1] :                            #check if peak location is within gene coordinates
                     # check for intron/exon
-                    exon_coords = zip(gene['exonStarts'],gene['exonEnds'])                                  #make master list of tuples (exonStart, exonend) 
+                    exon_coords = list(zip(gene['exonStarts'],gene['exonEnds']))                                  #make master list of tuples (exonStart, exonend) 
                     in_exon = False
                     for st,en in exon_coords :
                         if peak_loc >= st and peak_loc <= en :                                              # check if the peak location is in an exon region

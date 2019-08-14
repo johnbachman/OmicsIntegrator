@@ -19,7 +19,7 @@ def load_tgm(tgm_fn):
     Load tgm file and produce output matrix.
     Output is transposed numpy array object.
     '''
-    print 'Loading tgm file...'
+    print('Loading tgm file...')
     tgm = []
     for line in fileinput.input(tgm_fn):
         l = line.strip('\n').split()
@@ -27,7 +27,7 @@ def load_tgm(tgm_fn):
 
     # display results, return array
     s = np.asarray(tgm).T.shape
-    print 'TGM file loaded with %d genes by %d motifs.'%(s[0],s[1])
+    print('TGM file loaded with %d genes by %d motifs.'%(s[0],s[1]))
     return np.asarray(tgm).T
 
 def load_ids(ids_fn):
@@ -57,7 +57,7 @@ def load_response(data_fn):
             r_data.append(float(row[0]))
 #        r_data.append(float(line.strip('\n')))
     
-    print 'Response data file loaded with %d values.'%(len(r_data))
+    print('Response data file loaded with %d values.'%(len(r_data)))
     return np.asarray(r_data),r_genes
 
 def map_data(Xdata,Xnames,Ydata,Ynames):
@@ -76,7 +76,7 @@ def map_data(Xdata,Xnames,Ydata,Ynames):
     #            yn.append(Ygene)
     Xdata_out = Xdata[Xinds,:]
     Ydata_out = Ydata[Yinds]
-    print 'Found %d genes that have binding data and are in the expression output'%(len(Yinds))
+    print('Found %d genes that have binding data and are in the expression output'%(len(Yinds)))
 
     return Xdata_out,Ydata_out
 
@@ -137,7 +137,7 @@ def fdr_correction(results):
     '''
     new_results = []
     num_tests = len([r for r in results if str(r[1])!='nan'])
-    print 'Correcting for '+str(num_tests)+' numeric values'
+    print('Correcting for '+str(num_tests)+' numeric values')
     for i in range(0,num_tests):
         tup = results[i]
         pval = tup[2]
@@ -183,34 +183,34 @@ def main():
     # Load in Y-vector data (gene expression, fold-changes, etc.)
     response_data,response_genes = load_response(response_data_fn)
 
-    print 'Trying to get file type...'
+    print('Trying to get file type...')
     ext=tgm_fn.split('.')[-1]
     if ext.lower()=='pkl':
-        print '...found PKL file'
+        print('...found PKL file')
         pkl=True
     else:
-        print '...found text file, looking for additional data files in options'
+        print('...found text file, looking for additional data files in options')
         pkl=False
 
     # Handle options
     outdir = opts.outdir
     motif_ids = opts.motif_ids
     if motif_ids == None and not pkl:
-        print 'Must provide motif ids file or use pickled dictionary. Exiting.'
+        print('Must provide motif ids file or use pickled dictionary. Exiting.')
         sys.exit()
     tgm_genes = opts.tgm_genes
     if tgm_genes == None and not pkl:
-        print 'Must provide gene ids for motifs file or use pickled dictionary. Exiting.'
+        print('Must provide gene ids for motifs file or use pickled dictionary. Exiting.')
         sys.exit()
 #    response_genes = opts.response_genes
     if opts.response_genes == None and len(response_genes)==0:
-        print 'Must provide gene ids for response data or have a two-column data file. Exiting.'
+        print('Must provide gene ids for response data or have a two-column data file. Exiting.')
         sys.exit()
     norm_type = opts.norm_type
     valid_norm_types = ['log2','log10']
     if norm_type != None:
         if norm_type not in valid_norm_types:
-            print 'Normalization type not valid. Exiting.'
+            print('Normalization type not valid. Exiting.')
             sys.exit()
     
     if pkl:
@@ -317,7 +317,7 @@ def main():
                 cpv=0.0
             if lpv>cpv:
                 regdict[tf]=lpv
-    print 'Found '+str(len(regdict))+'Tf scores for '+str(len(new_results))+' motif results'
+    print('Found '+str(len(regdict))+'Tf scores for '+str(len(new_results))+' motif results')
     of=open(re.sub('.tsv','_FOREST_INPUT.tsv',outdir),'w')
     for tf in sorted(regdict.keys()):
         val=regdict[tf]

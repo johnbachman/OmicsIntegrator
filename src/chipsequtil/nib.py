@@ -7,14 +7,14 @@ import os
 import struct
 import sys
 import warnings
-from cStringIO import StringIO
+from io import StringIO
 from collections import defaultdict as dd
 
-from chipsequtil import reverse_complement, get_file_parts, BEDFile
+from .chipsequtil import reverse_complement, get_file_parts, BEDFile
 
 
 # module fields
-NOMASK,MASK,HARDMASK = range(3)
+NOMASK,MASK,HARDMASK = list(range(3))
 
 
 class NibException(Exception) : pass
@@ -190,7 +190,7 @@ def get_nib_seq_batch(nib,queries,mask=NOMASK) :
                                'utility cannot handle these cases, aborting. '\
                                'Requested interval: %s (%d,%d)'%(nib_fn,start,end))
 
-        start, end = map(int,(start,end))
+        start, end = list(map(int,(start,end)))
 
         # end == -1 means caller wants entire sequence
         if end == -1  :
@@ -314,7 +314,7 @@ class NibDB(SeqDB) :
         '''import this
         ...Explicit is better than implicit...
         '''
-        for nib_f in self._db_map.values() :
+        for nib_f in list(self._db_map.values()) :
             nib_f.close()
 
     def _get_db_map(self,name) :
@@ -344,12 +344,12 @@ class NibDB(SeqDB) :
 
         # extract sequences
         all_chrom_recs = []
-        for chrom, rec_list in chrom_recs.items() :
+        for chrom, rec_list in list(chrom_recs.items()) :
             # sorted lists make sequence extraction efficient
             rec_list.sort(key=lambda x: x[1][1]) # recs are (index,<tuple>)
 
             # separate indexes from records, extract for this chromo
-            indexes, c_recs = zip(*rec_list)
+            indexes, c_recs = list(zip(*rec_list))
 
             # get_nib_batch requires list of (<start>,<end>,<strand>) tuples, remove
             # chromo in first position
@@ -359,13 +359,13 @@ class NibDB(SeqDB) :
             headers, seqs = get_nib_batch(nib_f,c_recs,mask)
 
             # return the sequences to a (index,(header,sequence)) list
-            all_chrom_recs.extend(zip(indexes,zip(headers,seqs)))
+            all_chrom_recs.extend(list(zip(indexes,list(zip(headers,seqs)))))
 
         # put the sequences back in the original order
         all_chrom_recs.sort(key=lambda x: x[0]) # recs are (index,<tuple>) again
-        indexes, recs = zip(*all_chrom_recs)
+        indexes, recs = list(zip(*all_chrom_recs))
 
-        return zip(*recs)
+        return list(zip(*recs))
 
     def get_fasta_from_bed(self,bed,mask=NOMASK) :
         '''Accepts either a chipsequtil.BEDFile instance or a filename for a BED

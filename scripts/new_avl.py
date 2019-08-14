@@ -56,7 +56,7 @@ import sys
 
 
 def random_data_generator (max_r):
-    for i in xrange(max_r):
+    for i in range(max_r):
         yield random.randint(0, max_r)
 
 
@@ -579,7 +579,7 @@ class AVLTree():
             level = [start_node]
             while (len([i for i in level if (not i is None)])>0):
                 level_string = initial_spaces_string
-                for i in xrange(len(level)):
+                for i in range(len(level)):
                     j = (i+1)* spaces_count / (len(level)+1)
                     level_string = level_string[:j] + (str(level[i]) if level[i] else space_symbol) + level_string[j+1:]
                 level_next = []
