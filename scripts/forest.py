@@ -851,7 +851,6 @@ class PCSFOutput(object):
         # prizeTerm computed below
         edgeTerm = 0  # cummulative edge costs of included edges
         treesTerm = 0  # penalty for multiple trees
-
         edges = edgeList.split("\n")
         for edge in edges:
             words = edge.split()
@@ -940,7 +939,6 @@ class PCSFOutput(object):
             except KeyError:
                 ttype = ""
             optForest.node[node]["TerminalType"] = ttype
-
         # Create networkx graph storing the "augmented forest",
         # the result of msgsteiner plus all interactome edges between nodes
         # present in the forest
@@ -964,15 +962,14 @@ class PCSFOutput(object):
                             weight=edges[node2],
                             fracOptContaining=0.0,
                         )
-
         # Calculate betweenness centrality for all nodes in augmented forest
         if betweenness:
             betweenness = nx.betweenness_centrality(augForest)
-            nx.set_node_attributes(augForest, "betweenness", betweenness)
+            nx.set_node_attributes(augForest, betweenness, 'betweenness')
         else:
             for node in augForest.nodes():
                 augForest.node[node]["betweenness"] = 0
-
+    
         # Write info about results in info file
         err.write("\n")
         err.write(
@@ -1070,7 +1067,7 @@ class PCSFOutput(object):
 
             undirEdgesAdded = {}
 
-            edgesSorted = self.augForest.edges(data=True)
+            edgesSorted = list(self.augForest.edges(data=True))
             edgesSorted.sort(key=itemgetter(0, 1))
 
             # iterate through edges to record edge types and edge attributes
@@ -1119,7 +1116,7 @@ class PCSFOutput(object):
                         else:
                             undirEdgesAdded[node1] = {node2: 1}
 
-            nodesSorted = self.augForest.nodes(data=True)
+            nodesSorted = list(self.augForest.nodes(data=True))
             nodesSorted.sort(key=itemgetter(0, 1))
             # iterate through nodes to record node attributes
             for (node, data) in nodesSorted:
@@ -1136,7 +1133,7 @@ class PCSFOutput(object):
                     + "\n"
                 )
 
-            dumSorted = self.dumForest.edges()
+            dumSorted = list(self.dumForest.edges())
             dumSorted.sort(key=itemgetter(0, 1))
             # Record dummy edges
             for (node1, node2) in dumSorted:
@@ -1412,8 +1409,7 @@ def mergeOutputs(PCSFOutputObj1, PCSFOutputObj2, betweenness, n1=1, n2=1):
     # Calculate betweenness centrality for all nodes in augmented forest
     if betweenness:
         betweenness = nx.betweenness_centrality(mergedObj.augForest)
-        nx.set_node_attributes(mergedObj.augForest, "betweenness", betweenness)
-
+        nx.set_node_attributes(mergedObj.augForest, betweenness, "betweenness")
     print("Outputs were successfully merged.\n")
     return mergedObj
 
