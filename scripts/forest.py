@@ -785,6 +785,7 @@ class PCSFInput(object):
         errcode = subproc.wait()
         if errcode:
             errmess = subproc.stderr.read()
+            errmess = errmess.decode('utf-8')
             sys.exit(
                 "ERROR: There was a problem running the message passing"
                 " algorithm. <%s>: %s"
@@ -797,9 +798,11 @@ class PCSFInput(object):
         )
         input.close()
         info = subproc.stderr.read()
+        info = info.decode('utf-8')
         subproc.stderr.close()
         out.seek(0)
         edgeList = out.read()
+        edgeList = edgeList.decode('utf-8')
         out.close()
         return (edgeList, info)
 
