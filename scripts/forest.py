@@ -371,7 +371,6 @@ class PCSFInput(object):
         line = p.readline()
         try:
             words = line.strip().split()
-            print(words)
             words[1] = float(words[1])
         except ValueError:
             # Skipping header line
