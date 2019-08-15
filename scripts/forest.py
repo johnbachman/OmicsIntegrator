@@ -969,7 +969,7 @@ class PCSFOutput(object):
         else:
             for node in augForest.nodes():
                 augForest.node[node]["betweenness"] = 0
-    
+
         # Write info about results in info file
         err.write("\n")
         err.write(
@@ -1302,7 +1302,7 @@ def mergeOutputs(PCSFOutputObj1, PCSFOutputObj2, betweenness, n1=1, n2=1):
                 of msgsteiner runs each PCSFOutput object is a result
                 of (if one of PCSFOutputObj is the result of a merge,
                 this should be >1).
-          
+      
     RETURNS: A new PCSFOutput object, with all edges found in either
                 original object, with updated fracOptContaining and
                 betweenness values. If a node or edge is found in both
@@ -1566,14 +1566,33 @@ def randomTerminals(PCSFInputObj, seed, excludeT):
     return newPCSFInputObj
 
 
-# wrapper function for runPCSF() multiprocessing
-def PCSF(inputObj, msgpath, seed):
-    (Edge, Info) = inputObj.runPCSF(msgpath, seed)
-    return (Edge, Info)
+def PCSF_parr(func, excludeT, inputObj, msgpath, run_type,
+              outputpath, outputlabel, seed, i):
+    """Wrapper function for runPCSF when using multiprocessing"""
+    seed = seed + i if seed is not None else None
+    changedInputObj = func(inputObj, seed, excludeT)
+    (Edge, Info) = changedInputObj.runPCSF(msgpath, seed)
+    # By creating the output object with inputObj instead of
+    # changedInputObj, the prizes stored in the networkx graphs
+    # will be the ORIGINAL CORRECT prizes, not the changed prizes
+    changedOutputObj = PCSFOutput(
+        inputObj,
+        Edge,
+        Info,
+        outputpath,
+        outputlabel + "_%s_%i" % (run_type, i),
+        0,
+    )
+    label = "%s_%i" % (run_type, i)
+    out = os.path.join(outputpath, label)
+    if not os.path.exists(out):
+        os.makedirs(out)
+        changedOutputObj.writeCytoFiles(out, label, True)
+    return changedOutputObj
 
 
 def changeValuesAndMergeResults(
-    func,
+    run_type,
     seed,
     inputObj,
     numRuns,
@@ -1609,6 +1628,15 @@ def changeValuesAndMergeResults(
         "Preparing to change values %i times and get merged results of"
         " running the algorithm on new values.\n" % numRuns
     )
+    if run_type == 'shufflePrizes':
+        func = shufflePrizes
+    elif run_type == 'noisyEdges':
+        func = noiseEdges
+    elif run_type == 'randomTerminals':
+        func = randomTerminals
+    else:
+        raise(ValueError)
+
     # Create multiprocessing Pool
     if inputObj.processes is None:
         pool = mp.Pool()
@@ -1616,68 +1644,29 @@ def changeValuesAndMergeResults(
         pool = mp.Pool(inputObj.processes)
     # For each run, create process, change prize/edge values and run msgsteiner
     # Note that each run will create a info file
-    results = [pool.apply_async(PCSF,
-                                args=(func(inputObj,
-                                           seed + i if seed is not None
-                                           else None,
-                                           excludeT), msgpath,
-                                      seed + i if seed is not None
-                                      else None))
+    results = [pool.apply_async(PCSF_parr,
+                                args=(func, excludeT, inputObj, msgpath,
+                                      run_type, outputpath, outputlabel,
+                                      seed, i))
                for i in range(numRuns)]
     output = [p.get() for p in results]
     i = 0
+    if not merge:
+        return None
     # Merge output of new msgsteiner runs together
-    while i <= numRuns - 1:
-        (newEdgeList, newInfo) = output[i]
-        # By creating the output object with inputObj instead of
-        # changedInputObj, the prizes stored in the networkx graphs
-        # will be the ORIGINAL CORRECT prizes, not the changed prizes.
-        if str(func)[10:23] == "shufflePrizes":
-            changedOutputObj = PCSFOutput(
-                inputObj,
-                newEdgeList,
-                newInfo,
-                outputpath,
-                outputlabel + "_shuffledPrizes_%i" % i,
-                0,
-            )
-            label = "shuffledPrizes_%i" % i
-        elif str(func)[10:20] == "noiseEdges":
-            changedOutputObj = PCSFOutput(
-                inputObj,
-                newEdgeList,
-                newInfo,
-                outputpath,
-                outputlabel + "_noisyEdges_%i" % i,
-                0,
-            )
-            label = "noisyEdges_%i" % i
-        elif str(func)[10:25] == "randomTerminals":
-            changedOutputObj = PCSFOutput(
-                inputObj,
-                newEdgeList,
-                newInfo,
-                outputpath,
-                outputlabel + "_randomTerminals_%i" % i,
-                0,
-            )
-            label = "randomTerminals_%i" % i
-        out = os.path.join(outputpath, label)
-        if not os.path.exists(out):
-            os.makedirs(out)
-        changedOutputObj.writeCytoFiles(out, label, True)
-        merged = None
-        if merge:
-            if i == 0:
-                # first run
-                merged = changedOutputObj
-            elif i == numRuns - 1:
-                # last run, merge results and calculate betweenness
-                merged = mergeOutputs(merged, changedOutputObj, 1, i, 1)
-            else:
-                # Merge results of runs with the merged object containing all
-                # results so far
-                merged = mergeOutputs(merged, changedOutputObj, 0, i, 1)
+    for i in range(numRuns):
+        changedOutputObj = output[i]
+        #
+        if i == 0:
+            # first run
+            merged = changedOutputObj
+        elif i == numRuns - 1:
+            # last run, merge results and calculate betweenness
+            merged = mergeOutputs(merged, changedOutputObj, 1, i, 1)
+        else:
+            # Merge results of runs with the merged object containing all
+            # results so far
+            merged = mergeOutputs(merged, changedOutputObj, 0, i, 1)
         i += 1
     # return merged outputobj
     return merged
@@ -2027,7 +2016,7 @@ def main():
     # Get merged results of adding noise to edge values
     if options.noiseNum > 0:
         merged = changeValuesAndMergeResults(
-            noiseEdges,
+            'noisyEdges',
             options.seed,
             inputObj,
             options.noiseNum,
@@ -2047,7 +2036,7 @@ def main():
     # Get merged results of shuffling prizes
     if options.shuffleNum > 0:
         merged = changeValuesAndMergeResults(
-            shufflePrizes,
+            'shufflePrizes',
             options.seed,
             inputObj,
             options.shuffleNum,
@@ -2067,7 +2056,7 @@ def main():
     # Get merged results of randomizing terminals
     if options.termNum > 0:
         merged = changeValuesAndMergeResults(
-            randomTerminals,
+            'randomTerminals',
             options.seed,
             inputObj,
             options.termNum,
