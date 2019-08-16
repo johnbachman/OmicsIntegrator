@@ -10,6 +10,28 @@
 programname=`basename "$0"`
 DIR="$(dirname "$(readlink -f "$0")")"
 
+function usage () {
+    echo "usage: $programname [-w W] [-d Depth] [-b Beta] [-u Mu] [-r num_runs]"
+    echo "                     [-n noise] [prize] [edge] [outpath]"
+    echo "    -w    W        Max number of trees in generated forest"
+    echo "    -d    Depth    Max path-length from dummy node to terminal nodes"
+    echo "    -b    Beta     Controls tradeoff between including more terminals"
+    echo "                   and using less reliable edges"
+    echo "    -u    Mu       Controls downweighting of prizes based on degree."
+    echo "                   Used to penalize hub nodes."
+    echo "    -r    num_runs Number of noisy edge runs to generate. If unset,"
+    echo "                   there will be no noisy edge runs"
+    echo "    -n    noise    Standard deviation of Gaussian noise to add to"
+    echo "                   edge weights for noisy runs."
+    echo "          prize    Path to prize file."
+    echo "          edge     Path to interactome."
+    echo "          outpath  Directory to output results."
+    echo "*********************************************************************"
+    echo "Wrapper script around forest.py that generates config file based on"
+    echo "command line arguments. Makes it easier to script calls to forest.py."
+    echo "*********************************************************************"
+    exit 1
+}
 # Default parameters
 w=5 # controls the number of trees in output
 d=10 # maximum depth from the dummy node
@@ -27,8 +49,7 @@ do
 	b) b="$OPTARG";;
 	u) u="$OPTARG";;
 	r) r="$OPTARG";;
-	n) n="$OPTARG";;
-	
+	n) n="$OPTARG";;	
     esac
 done
 
@@ -36,6 +57,15 @@ done
 prize=${@:$OPTIND:1}
 edge=${@:$OPTIND+1:1}
 outpath=${@:$OPTIND+2:1}
+
+if [ -z "$prize" ] || [ -z "$edge" ] || [ -z "$outpath" ]
+then
+    echo $prize
+    echo $edge
+    echo $outpath
+    usage
+    exit 1
+fi
 
 # if the specified output directory does not exist, create it
 mkdir -p $outpath
