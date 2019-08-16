@@ -199,7 +199,7 @@ def main():
     parser.add_argument(
         "--merge",
         dest="merge",
-        help="Don't merge results of multirun methods such as noisyEdges",
+        help="Merge results of multirun methods such as noisyEdges",
         default=False,
     )
 
