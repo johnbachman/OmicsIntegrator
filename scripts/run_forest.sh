@@ -7,6 +7,8 @@
 #! /usr/bin/env bash
 #########################################################
 
+programname=`basename "$0"`
+DIR="$(dirname "$(readlink -f "$0")")"
 
 # Default parameters
 w=5 # controls the number of trees in output
@@ -50,7 +52,7 @@ EOF
 
 echo $n
 echo $([[ -n $n ]] && echo "--noisyEdges $n")
-python $(dirname "$0")/forest.py --prize=$prize --edge=$edge --outpath=$outpath --conf=$conf/forest_cfg $([[ -n $r ]] && echo "--noisyEdges $r")
+python $DIR/forest.py --prize=$prize --edge=$edge --outpath=$outpath --conf=$conf/forest_cfg $([[ -n $r ]] && echo "--noisyEdges $r")
 
 # Add the generated conf file to the output folder so we can recover
 # the parameters later
