@@ -7,8 +7,6 @@ of continued development. The original README is shown below. It has become out 
 date for this fork but still gives a good overview of the project.
 
 
-[![Build Status](https://travis-ci.org/fraenkel-lab/OmicsIntegrator.svg?branch=master)](https://travis-ci.org/fraenkel-lab/OmicsIntegrator)
-
 Omics Integrator is a package designed to integrate proteomic data, gene expression data and/or epigenetic data using a protein-protein interaction network. It is comprised of two modules, Garnet and Forest.
 
 Contact: Amanda Kedaigle [mandyjoy@mit.edu]
