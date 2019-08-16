@@ -4,6 +4,7 @@
 #Wrapper around the forest.py script in Omics Integrator
 # Automates generation of temporary config files 
 #Albert Steppi 7.27.2018
+#! /usr/bin/env bash
 #########################################################
 
 
