@@ -1,8 +1,11 @@
 <center><img src="http://fraenkel-nsf.csbi.mit.edu/omicsintegrator/omicsI_logo.png" height="40%" width="40%" ></center>
 
-## OmicsIntegrator has moved. See [OmicsIntegrator2](https://github.com/fraenkel-lab/OmicsIntegrator2). This codebase is not maintained. 
+## OmicsIntegrator has moved. See [OmicsIntegrator2](https://github.com/fraenkel-lab/OmicsIntegrator2). This codebase is not maintained by its original owners.
+This fork contains only Forest from the
+original OmicsIntegrator. It has been ported to Python3 and will see a small amount
+of continued development. The original README is shown below. It has become out of
+date for this fork but still gives a good overview of the project.
 
-[![Build Status](https://travis-ci.org/fraenkel-lab/OmicsIntegrator.svg?branch=master)](https://travis-ci.org/fraenkel-lab/OmicsIntegrator)
 
 Omics Integrator is a package designed to integrate proteomic data, gene expression data and/or epigenetic data using a protein-protein interaction network. It is comprised of two modules, Garnet and Forest.
 
