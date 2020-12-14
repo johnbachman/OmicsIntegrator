@@ -919,7 +919,7 @@ class PCSFOutput(object):
         terminalCount = 0
         for node in optForest.nodes():
             try:
-                optForest.node[node]["prize"] = inputObj.totalPrizes[node]
+                optForest.nodes[node]["prize"] = inputObj.totalPrizes[node]
                 prizeTerm -= inputObj.totalPrizes[node]
 
                 # Count terminal nodes (nodes that had prizes before mu)
@@ -929,14 +929,14 @@ class PCSFOutput(object):
                 except KeyError:
                     pass
             except KeyError:
-                optForest.node[node]["prize"] = 0
-            optForest.node[node]["fracOptContaining"] = 1.0
+                optForest.nodes[node]["prize"] = 0
+            optForest.nodes[node]["fracOptContaining"] = 1.0
             # Added by sgosline: store terminal type to improve visualization
             try:
                 ttype = inputObj.terminalTypes[node]
             except KeyError:
                 ttype = ""
-            optForest.node[node]["TerminalType"] = ttype
+            optForest.nodes[node]["TerminalType"] = ttype
         # Create networkx graph storing the "augmented forest",
         # the result of msgsteiner plus all interactome edges between nodes
         # present in the forest
@@ -966,7 +966,7 @@ class PCSFOutput(object):
             nx.set_node_attributes(augForest, betweenness, 'betweenness')
         else:
             for node in augForest.nodes():
-                augForest.node[node]["betweenness"] = 0
+                augForest.nodes[node]["betweenness"] = 0
 
         # Write info about results in info file
         err.write("\n")
@@ -1332,11 +1332,11 @@ def mergeOutputs(PCSFOutputObj1, PCSFOutputObj2, betweenness, n1=1, n2=1):
         try:
             # if the node is not in outputObj2 this will return a KeyError
             numRuns2 = (
-                PCSFOutputObj2.optForest.node[node]["fracOptContaining"] * n2
+                PCSFOutputObj2.optForest.nodes[node]["fracOptContaining"] * n2
             )
         except KeyError:
             numRuns2 = 0.0
-        mergedObj.optForest.node[node]["fracOptContaining"] = (
+        mergedObj.optForest.nodes[node]["fracOptContaining"] = (
             numRuns1 + numRuns2
         ) / (n1 + n2)
     # Add optForest edges to mergedObj that appear in outputObj2 but not in
@@ -1351,8 +1351,8 @@ def mergeOutputs(PCSFOutputObj1, PCSFOutputObj2, betweenness, n1=1, n2=1):
             if node1 not in mergedObj.optForest.nodes():
                 mergedObj.optForest.add_node(
                     node1,
-                    prize=PCSFOutputObj2.optForest.node[node1]["prize"],
-                    TerminalType=PCSFOutputObj2.optForest.node[node1][
+                    prize=PCSFOutputObj2.optForest.nodes[node1]["prize"],
+                    TerminalType=PCSFOutputObj2.optForest.nodes[node1][
                         "TerminalType"
                     ],
                     fracOptContaining=numRuns2 / (n1 + n2),
@@ -1360,8 +1360,8 @@ def mergeOutputs(PCSFOutputObj1, PCSFOutputObj2, betweenness, n1=1, n2=1):
             if node2 not in mergedObj.optForest.nodes():
                 mergedObj.optForest.add_node(
                     node2,
-                    prize=PCSFOutputObj2.optForest.node[node2]["prize"],
-                    TerminalType=PCSFOutputObj2.optForest.node[node2][
+                    prize=PCSFOutputObj2.optForest.nodes[node2]["prize"],
+                    TerminalType=PCSFOutputObj2.optForest.nodes[node2][
                         "TerminalType"
                     ],
                     fracOptContaining=numRuns2 / (n1 + n2),
